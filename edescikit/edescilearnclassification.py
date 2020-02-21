@@ -655,24 +655,6 @@ class SciClassification:
         for k, v in settings.items():
             logger.info('[{}] : [INFO] TPOT parame {} set to {}'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), k, v))
-        # tp = TPOTClassifier(
-        #     generations=2,
-        #     population_size=2,
-        #     offspring_size=2,
-        #     mutation_rate=0.9,
-        #     crossover_rate=0.1,
-        #     scoring='f1_macro',
-        #     max_time_mins=1,
-        #     max_eval_time_mins=5,
-        #     random_state=42,
-        #     cv=2,
-        #     n_jobs=-1,
-        #     verbosity=3,
-        #     config_dict=tpot.config.classifier_config_dict_light,
-        #     use_dask=True,
-        #
-        # )
-
         logger.info('[{}] : [INFO] Starting TPOT Optimization ...'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
         try:

@@ -791,7 +791,6 @@ class EDEngine:
                                                    validratio=self.validratio, compare=self.compare, cv=self.cv,
                                                    trainscore=self.trainscore, scorers=self.scorers,
                                                    returnestimators=self.returnestimators)
-                print(self.tpot)
                 clf = classede.dask_tpot(self.tpot,
                                          X=pr_data,
                                          y=y)
