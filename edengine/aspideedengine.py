@@ -735,7 +735,8 @@ class EDEngine:
             if self.analysis is not None:
                 self.analisysDask(pr_data)
             if self.traintype == 'clustering':
-                print("Clustering")
+                logger.info('[{}] : [INFO] Training clusterer ...'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
                 if self.trainmethod == 'isoforest':  # TODO: parse method settings corectly
                     disofrst = sdmon.SciCluster(self.modelsDir)
                     isofrstmodel = disofrst.dask_isolationForest(settings=self.methodSettings, mname=self.export, data=asudata)
@@ -757,7 +758,8 @@ class EDEngine:
                             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
 
             elif self.traintype == 'classification':
-                print("Classification")
+                logger.info('[{}] : [INFO] Training classifier ...'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
                 classede = cdmon.SciClassification(self.modelsDir, self.dataDir, self.checkpoint, self.export,
                                                     training=self.trainingSet, validation=self.validationSet,
                                                     validratio=self.validratio, compare=self.compare, cv=self.cv,
@@ -794,11 +796,12 @@ class EDEngine:
                 clf = classede.dask_tpot(self.tpot,
                                          X=pr_data,
                                          y=y)
-
             else:
                 logger.error('[{}] : [ERROR] Unknown training type {}'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), self.type))
                 sys.exit(1)
+            logger.info('[{}] : [INFO] Training complete'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
         else:
             logger.warning('[%s] : [WARN] Training is set to false, skipping...',
                            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
@@ -1163,6 +1166,8 @@ class EDEngine:
                                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(inst),
                                 inst.args))
                             sudata = udata
+                    else:
+                        sudata = udata
                     if self.augmentations is not None:
                         try:
                             operations = self.augmentations['Operations']
@@ -1192,7 +1197,6 @@ class EDEngine:
                         # print(anomalies)
                         sleep(parseDelay(self.delay))
             elif self.detecttype == 'classification':
-                print("Classification detection")
                 logger.info('[{}] : [INFO] Detection with classifier started. Getting data ...'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
                 while True:
@@ -1211,6 +1215,8 @@ class EDEngine:
                                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(inst),
                                 inst.args))
                             sudata = udata
+                    else:
+                        sudata = udata
                     if self.augmentations is not None:
                         try:
                             operations = self.augmentations['Operations']
@@ -1223,7 +1229,7 @@ class EDEngine:
                         asudata = self.dformat.computeOnColumns(sudata, operations=operations,
                                                                 remove_filtered=remove_filtered)
                     else:
-                        asudata = udata
+                        asudata = sudata
                     if checkpoint:
                         asudata.to_csv(os.path.join(self.dataDir, 'pr_data_detect_augmented.csv'))
                     classede = cdmon.SciClassification(self.modelsDir, self.dataDir, self.checkpoint, self.export,

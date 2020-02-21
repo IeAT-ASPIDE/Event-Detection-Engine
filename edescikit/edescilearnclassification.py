@@ -929,7 +929,7 @@ class SciClassification:
 
         elif hpomethod == 'Grid':
             gs_settings = {
-                "param_distributions": param_dist,
+                "param_grid": param_dist,
                 "cv": cv,
                 "scoring": scorer,
                 "return_train_score": self.returnestimators
@@ -1428,13 +1428,11 @@ class SciClassification:
         '''
         lmodel = glob.glob(os.path.join(self.modelDir, ("%s_%s.pkl" % (method, model))))
         if not lmodel:
-            print("No %s model with the name %s found" %(method, model))
             logger.warning('[%s] : [WARN] No %s model with the name %s found',
                          datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), method, model)
             return 0
         else:
             smodel = pickle.load(open(lmodel[0], "rb"))
-            print("Succesfully loaded %s model with the name %s" % (method, model))
             logger.info('[%s] : [INFO] Succesfully loaded %s model with the name %s',
                         datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), method, model)
             return smodel

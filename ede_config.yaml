@@ -1,6 +1,6 @@
 Connector:
 #  ESEndpoint: "85.120.206.59" # Elasticsearch endoint
-  PREndpoint: "10.9.8.136" # Prometheus endoint
+  PREndpoint: 10.9.8.136 # Prometheus endoint
 #  PREndpoint: hal720m.sage.ieat.ro
   Dask:
     SchedulerEndpoint: "local" # todo if not local give dask scheduler endoint
@@ -17,7 +17,7 @@ Connector:
   QSize: 0 # todo check if query size is needed
   Index: time
   QDelay: "10s" # Polling period for metrics fetching
-  Local: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/data/demo_data.csv # Define the path to the local file for training
+#  Local: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/data/demo_data.csv # Define the path to the local file for training
 
 Mode:
   Training: True
@@ -39,10 +39,6 @@ Mode:
   Fillna: True # fill none values with 0
   Dropna: True # delete columns woth none values
 
-#Filter:
-#  Columns: "colname;colname2;colname3"
-#  Rows: "ld:145607979;gd:145607979"
-#  DColumns: "colname;colname2;colname3"
 
 #Augmentation:
 #  Scaler: # if not used set to false
@@ -91,32 +87,32 @@ Mode:
 
 
 # Analysis example
-#Analysis:
-#  Methods:
-#    - Method: !!python/object/apply:edeuser.user_methods.wrapper_analysis_corr
-#        kwds:
-#          name: Pearson1
-#          annot: False
-#          cmap: RdBu_r
-#          columns:
-#            - node_load1_10.211.55.101:9100
-#            - node_load1_10.211.55.102:9100
-#            - node_load1_10.211.55.103:9100
-#            - node_memory_Cached_bytes_10.211.55.101:9100
-#            - node_memory_Cached_bytes_10.211.55.102:9100
-#            - node_memory_Cached_bytes_10.211.55.103:9100
-#            - time
-#          location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
-#    - Method: !!python/object/apply:edeuser.user_methods.wrapper_analysis_plot
-#        kwds:
-#          name: line1
-#          columns:
-#            - node_load1_10.211.55.101:9100
-#            - node_load1_10.211.55.102:9100
-#            - node_load1_10.211.55.103:9100
-#            - time
-#          location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
-#  Solo: True
+Analysis:
+  Methods:
+    - Method: !!python/object/apply:edeuser.user_methods.wrapper_analysis_corr
+        kwds:
+          name: Pearson1
+          annot: False
+          cmap: RdBu_r
+          columns:
+            - node_load1_10.211.55.101:9100
+            - node_load1_10.211.55.102:9100
+            - node_load1_10.211.55.103:9100
+            - node_memory_Cached_bytes_10.211.55.101:9100
+            - node_memory_Cached_bytes_10.211.55.102:9100
+            - node_memory_Cached_bytes_10.211.55.103:9100
+            - time
+          location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+    - Method: !!python/object/apply:edeuser.user_methods.wrapper_analysis_plot
+        kwds:
+          name: line1
+          columns:
+            - node_load1_10.211.55.101:9100
+            - node_load1_10.211.55.102:9100
+            - node_load1_10.211.55.103:9100
+            - time
+          location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+  Solo: True
 
 
 
