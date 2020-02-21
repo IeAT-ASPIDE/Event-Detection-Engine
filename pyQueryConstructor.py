@@ -1,0 +1,1127 @@
+"""
+Copyright 2019, Institute e-Austria, Timisoara, Romania
+    http://www.ieat.ro/
+Developers:
+ * Gabriel Iuhasz, iuhasz.gabriel@info.uvt.ro
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at:
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
+from addict import Dict
+import os
+import json
+
+
+class QueryConstructor():
+    def __init__(self, queryDir):
+        self.author = 'Constructor for EDE ES and PR connector querys'
+        self.queryDir = queryDir
+
+    def loadString(self, host):
+        qstring = "collectd_type:\"load\" AND host:\"%s\"" % host
+        file = "Load_%s.csv" % host
+        return qstring, file
+
+    def memoryString(self, host):
+        qstring = "collectd_type:\"memory\" AND host:\"%s\"" % host
+        file = "Memory_%s.csv" % host
+        return qstring, file
+
+    def interfaceString(self, host):
+        qstring = "plugin:\"interface\" AND collectd_type:\"if_octets\" AND host:\"%s\"" % host
+        file = "Interface_%s.csv" % host
+        return qstring, file
+
+    def packetString(self, host):
+        qstring = "plugin:\"interface\" AND collectd_type:\"if_packets\" AND host:\"%s\"" % host
+        file = "Packets_%s.csv" % host
+        return qstring, file
+
+    def dfsString(self):
+        qstring = "serviceType:\"dfs\""
+        file = "DFS.csv"
+        return qstring, file
+
+    def dfsFString(self):
+        qstring = "serviceType:\"dfs\" AND serviceMetrics:\"FSNamesystem\""
+        file = "DFSFS.csv"
+        return qstring, file
+
+    def jvmnodeManagerString(self, host):
+        qstring = "serviceType:\"jvm\" AND ProcessName:\"NodeManager\" AND hostname:\"%s\"" % host
+        file = "JVM_NM_%s.csv" % host
+        return qstring, file
+
+    def jvmNameNodeString(self):
+        qstring = "serviceType:\"jvm\" AND ProcessName:\"NameNode\""
+        file = "JVM_NN.csv"
+        return qstring, file
+
+    def nodeManagerString(self, host):
+        qstring = "serviceType:\"yarn\" AND serviceMetrics:\"NodeManagerMetrics\" AND hostname:\"%s\"" % host
+        file = "NM_%s.csv" % host
+        return qstring, file
+
+    def queueResourceString(self):
+        qstring = "type:\"resourcemanager-metrics\" AND serviceMetrics:\"QueueMetrics\""
+        file = "ResourceManagerQueue.csv"
+        return qstring, file
+
+    def clusterMetricsSring(self):
+        qstring = "type:\"resourcemanager-metrics\" AND ClusterMetrics:\"ResourceManager\""
+        file = "ClusterMetrics.csv"
+        return qstring, file
+
+    def jvmMapTask(self, host):
+        qstring = "hostname:\"%s\" AND type:\"maptask-metrics\"" % host  # TODO add per process name
+        file = "JVM_MapTask_%s.csv" % host
+        return qstring, file
+
+    def jvmResourceManagerString(self):
+        qstring = "type:\"resourcemanager-metrics\" AND serviceType:\"jvm\""
+        file = "JVM_RM.csv"
+        return qstring, file
+
+    def datanodeString(self, host):
+        qstring = "type:\"datanode-metrics\" AND serviceType:\"dfs\" AND hostname:\"%s\"" % host
+        file = 'DN_%s.csv' % host
+        return qstring, file
+
+    def mrappmasterString(self):
+        qstring = "type:\"mrappmaster-metrics\" AND serviceMetrics:\"MRAppMetrics\""
+        file = 'MRAPP.csv'
+        return qstring, file
+
+    def jvmMrappmasterString(self):
+        qstring = "type:\"mrappmaster-metrics\" AND serviceMetrics:\"JvmMetrics\""
+        file = "JVM_MRAPP.csv"
+        return qstring, file
+
+    def fsopDurationsString(self):
+        qstring = "type:\"resourcemanager-metrics\" AND serviceMetrics:\"FSOpDurations\""
+        file = 'FSOP.csv'
+        return qstring, file
+
+    def shuffleString(self, host):
+        qstring = "serviceMetrics:\"ShuffleMetrics\" AND serviceType:\"mapred\" AND hostname:\"%s\"" % host
+        file = 'Shuffle_%s.csv' % host
+        return qstring, file
+
+    def jvmRedProcessString(self, host):
+        qstring = "type:\"reducetask-metrics\" AND serviceType:\"jvm\" AND hostname:\"%s\"" % host
+        return qstring
+
+    def jvmMapProcessingString(self, host):
+        qstring = "type:\"maptask-metrics\" AND serviceType:\"jvm\" AND hostname:\"%s\"" % host
+        return qstring #TODO
+
+    def jvmRedProcessbyNameString(self, host, process):
+        qstring = "type:\"reducetask-metrics\" AND serviceType:\"jvm\" AND hostname:\"%s\" AND ProcessName:\"%s\"" %(host, process)
+        file = 'JVM_ReduceTask_%s_%s.csv' %(host, process)
+        return qstring, file
+
+    def jvmMapProcessbyNameString(self, host, process):
+        qstring = "type:\"maptask-metrics\" AND serviceType:\"jvm\" AND hostname:\"%s\" AND ProcessName:\"%s\"" % (
+        host, process)
+        file = 'JVM_MapTasksTask_%s_%s.csv' % (host, process)
+        return qstring, file
+
+    def stormString(self):
+        qstring = "type:\"storm-topology\""
+        file = 'Storm.csv'
+        return qstring, file
+
+    def cassandraCounterString(self, host):
+        qstring = "plugin:\"GenericJMX\" AND collectd_type:\"counter\" host:\"%s\"" % host
+        file = "Cassandra_counter_%s.csv" % host
+        return qstring, file
+
+    def cassandraGaugeString(self, host):
+        qstring = "plugin:\"GenericJMX\" AND collectd_type:\"gauge\" host:\"%s\"" % host
+        file = "Cassandra_gauge_%s.csv" % host
+        return qstring, file
+
+    def mongodbCounterString(self, host):
+        qstring = "plugin:mongo AND collectd_type:counter AND host:\"%s\"" % host
+        file = "MongoDB_Counter_%s.csv" % host
+        return qstring, file
+
+    def mongodbGaugeString(self, host):
+        qstring = "plugin:mongo AND collectd_type:gauge AND host:\"%s\"" % host
+        file = "MongoDB_Gauge_%s.csv" % host
+        return qstring, file
+
+    def sideQueryString(self):
+        file = "query_response.csv"
+        return file
+
+    def sparkString(self):
+        qstring = "*"
+        file = "Spark.csv"
+        return qstring, file
+
+    def cepQueryString(self):
+        qstring = "type:cep-posidonia AND DComp:DMON"
+        file = "CEP.csv"
+        return qstring, file
+
+    def loadAverage(self):  # TODO
+        return "Average load across all nodes!"
+
+    def memoryAverage(self):
+        return "Average memory across all nodes!"
+
+    def interfaceAverage(self):  # TODO
+        return "Average interface across all nodes!"
+
+    def packetAverage(self):  # TODO
+        return "Average packets across all nodes!"
+
+    def pr_query_node(self, time='1h'):
+        qstr = '''{{__name__=~"node.+"}}[{}]'''.format(time)
+        prquery = Dict()
+        prquery.query = qstr
+
+        return prquery
+
+    def yarnNodeManager(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+                            qmin_doc_count=1):
+
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["3"].date_histogram.field = "@timestamp"
+        cquery.aggs["3"].date_histogram.interval = qinterval
+        cquery.aggs["3"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["3"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["3"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["3"].date_histogram.extended_bounds.max = qlte
+
+        # Specify precise metrics, and the average value expressed by 'avg' key
+        cquery.aggs["3"].aggs["40"].avg.field = "ContainersLaunched"
+        cquery.aggs["3"].aggs["41"].avg.field = "ContainersCompleted"
+        cquery.aggs["3"].aggs["42"].avg.field = "ContainersFailed"
+        cquery.aggs["3"].aggs["43"].avg.field = "ContainersKilled"
+        cquery.aggs["3"].aggs["44"].avg.field = "ContainersIniting"
+        cquery.aggs["3"].aggs["45"].avg.field = "ContainersRunning"
+        cquery.aggs["3"].aggs["47"].avg.field = "AllocatedGB"
+        cquery.aggs["3"].aggs["48"].avg.field = "AllocatedContainers"
+        cquery.aggs["3"].aggs["49"].avg.field = "AvailableGB"
+        cquery.aggs["3"].aggs["50"].avg.field = "AllocatedVCores"
+        cquery.aggs["3"].aggs["51"].avg.field = "AvailableVCores"
+        cquery.aggs["3"].aggs["52"].avg.field = "ContainerLaunchDurationNumOps"
+        cquery.aggs["3"].aggs["53"].avg.field = "ContainerLaunchDurationAvgTime"
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def systemLoadQuery(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+                            qmin_doc_count=1):
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["2"].date_histogram.field = "@timestamp"
+        cquery.aggs["2"].date_histogram.interval = qinterval
+        cquery.aggs["2"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["2"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["2"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["2"].date_histogram.extended_bounds.max = qlte
+
+        # Specifc system metrics for cpu load
+        cquery.aggs["2"].aggs["1"].avg.field = "shortterm"
+        cquery.aggs["2"].aggs["3"].avg.field = "midterm"
+        cquery.aggs["2"].aggs["4"].avg.field = "longterm"
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def systemMemoryQuery(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+                            qmin_doc_count=1):
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["2"].date_histogram.field = "@timestamp"
+        cquery.aggs["2"].date_histogram.interval = qinterval
+        cquery.aggs["2"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["2"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["2"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["2"].date_histogram.extended_bounds.max = qlte
+
+        cquery.aggs["2"].aggs["3"].terms.field = "type_instance.raw"
+        cquery.aggs["2"].aggs["3"].terms.size = 0
+        cquery.aggs["2"].aggs["3"].terms.order["1"] = "desc"
+        cquery.aggs["2"].aggs["3"].aggs["1"].avg.field = "value"
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def systemInterfaceQuery(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+                            qmin_doc_count=1):
+
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["3"].date_histogram.field = "@timestamp"
+        cquery.aggs["3"].date_histogram.interval = qinterval
+        cquery.aggs["3"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["3"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["3"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["3"].date_histogram.extended_bounds.max = qlte
+        cquery.aggs["3"].aggs["1"].avg.field = "tx"
+        cquery.aggs["3"].aggs["2"].avg.field = "rx"
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def dfsQuery(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+                            qmin_doc_count=1):
+
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["3"].date_histogram.field = "@timestamp"
+        cquery.aggs["3"].date_histogram.interval = qinterval
+        cquery.aggs["3"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["3"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["3"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["3"].date_histogram.extended_bounds.max = qlte
+
+        #DFS metrics
+        cquery.aggs["3"].aggs["2"].avg.field = "CreateFileOps"
+        cquery.aggs["3"].aggs["4"].avg.field = "FilesCreated"
+        cquery.aggs["3"].aggs["5"].avg.field = "FilesAppended"
+        cquery.aggs["3"].aggs["6"].avg.field = "GetBlockLocations"
+        cquery.aggs["3"].aggs["7"].avg.field = "FilesRenamed"
+        cquery.aggs["3"].aggs["8"].avg.field = "GetListingOps"
+        cquery.aggs["3"].aggs["9"].avg.field = "DeleteFileOps"
+        cquery.aggs["3"].aggs["10"].avg.field = "FilesDeleted"
+        cquery.aggs["3"].aggs["11"].avg.field = "FileInfoOps"
+        cquery.aggs["3"].aggs["12"].avg.field = "AddBlockOps"
+        cquery.aggs["3"].aggs["13"].avg.field = "GetAdditionalDatanodeOps"
+        cquery.aggs["3"].aggs["14"].avg.field = "CreateSymlinkOps"
+        cquery.aggs["3"].aggs["15"].avg.field = "GetLinkTargetOps"
+        cquery.aggs["3"].aggs["16"].avg.field = "FilesInGetListingOps"
+        cquery.aggs["3"].aggs["17"].avg.field = "AllowSnapshotOps"
+        cquery.aggs["3"].aggs["18"].avg.field = "DisallowSnapshotOps"
+        cquery.aggs["3"].aggs["19"].avg.field = "CreateSnapshotOps"
+        cquery.aggs["3"].aggs["20"].avg.field = "DeleteSnapshotOps"
+        cquery.aggs["3"].aggs["21"].avg.field = "RenameSnapshotOps"
+        cquery.aggs["3"].aggs["22"].avg.field = "ListSnapshottableDirOps"
+        cquery.aggs["3"].aggs["23"].avg.field = "SnapshotDiffReportOps"
+        cquery.aggs["3"].aggs["24"].avg.field = "BlockReceivedAndDeletedOps"
+        cquery.aggs["3"].aggs["25"].avg.field = "StorageBlockReportOps"
+        cquery.aggs["3"].aggs["26"].avg.field = "TransactionsNumOps"
+        cquery.aggs["3"].aggs["27"].avg.field = "TransactionsAvgTime"
+        cquery.aggs["3"].aggs["28"].avg.field = "SnapshotNumOps"
+        cquery.aggs["3"].aggs["29"].avg.field = "SyncsAvgTime"
+        cquery.aggs["3"].aggs["30"].avg.field = "TransactionsBatchedInSync"
+        cquery.aggs["3"].aggs["31"].avg.field = "BlockReportNumOps"
+        cquery.aggs["3"].aggs["32"].avg.field = "BlockReportAvgTime"
+        cquery.aggs["3"].aggs["33"].avg.field = "SafeModeTime"
+        cquery.aggs["3"].aggs["34"].avg.field = "FsImageLoadTime"
+        cquery.aggs["3"].aggs["35"].avg.field = "GetEditNumOps"
+        cquery.aggs["3"].aggs["36"].avg.field = "GetGroupsAvgTime"
+        cquery.aggs["3"].aggs["37"].avg.field = "GetImageNumOps"
+        cquery.aggs["3"].aggs["38"].avg.field = "GetImageAvgTime"
+        cquery.aggs["3"].aggs["39"].avg.field = "PutImageNumOps"
+        cquery.aggs["3"].aggs["40"].avg.field = "PutImageAvgTime"
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def dfsFSQuery(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+                            qmin_doc_count=1):
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["34"].date_histogram.field = "@timestamp"
+        cquery.aggs["34"].date_histogram.interval = qinterval
+        cquery.aggs["34"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["34"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["34"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["34"].date_histogram.extended_bounds.max = qlte
+
+        #DFS FS metrics
+        cquery.aggs["34"].aggs["1"].avg.field = "BlocksTotal"
+        cquery.aggs["34"].aggs["2"].avg.field = "MissingBlocks"
+        cquery.aggs["34"].aggs["3"].avg.field = "MissingReplOneBlocks"
+        cquery.aggs["34"].aggs["4"].avg.field = "ExpiredHeartbeats"
+        cquery.aggs["34"].aggs["5"].avg.field = "TransactionsSinceLastCheckpoint"
+        cquery.aggs["34"].aggs["6"].avg.field = "TransactionsSinceLastLogRoll"
+        cquery.aggs["34"].aggs["7"].avg.field = "LastWrittenTransactionId"
+        cquery.aggs["34"].aggs["8"].avg.field = "LastCheckpointTime"
+        cquery.aggs["34"].aggs["9"].avg.field = "UnderReplicatedBlocks"
+        cquery.aggs["34"].aggs["10"].avg.field = "CorruptBlocks"
+        cquery.aggs["34"].aggs["11"].avg.field = "CapacityTotal"
+        cquery.aggs["34"].aggs["12"].avg.field = "CapacityTotalGB"
+        cquery.aggs["34"].aggs["13"].avg.field = "CapacityUsed"
+        #cquery.aggs["34"].aggs["14"].avg.field = "CapacityTotalGB" ####
+        #cquery.aggs["34"].aggs["15"].avg.field = "CapacityUsed"
+        cquery.aggs["34"].aggs["16"].avg.field = "CapacityUsedGB"
+        cquery.aggs["34"].aggs["17"].avg.field = "CapacityRemaining"
+        cquery.aggs["34"].aggs["18"].avg.field = "CapacityRemainingGB"
+        cquery.aggs["34"].aggs["19"].avg.field = "CapacityUsedNonDFS"
+        cquery.aggs["34"].aggs["20"].avg.field = "TotalLoad"
+        cquery.aggs["34"].aggs["21"].avg.field = "SnapshottableDirectories"
+        cquery.aggs["34"].aggs["22"].avg.field = "Snapshots"
+        cquery.aggs["34"].aggs["23"].avg.field = "FilesTotal"
+        cquery.aggs["34"].aggs["24"].avg.field = "PendingReplicationBlocks"
+        cquery.aggs["34"].aggs["25"].avg.field = "ScheduledReplicationBlocks"
+        cquery.aggs["34"].aggs["26"].avg.field = "PendingDeletionBlocks"
+        cquery.aggs["34"].aggs["27"].avg.field = "ExcessBlocks"
+        cquery.aggs["34"].aggs["28"].avg.field = "PostponedMisreplicatedBlocks"
+        cquery.aggs["34"].aggs["29"].avg.field = "PendingDataNodeMessageCount"
+        cquery.aggs["34"].aggs["30"].avg.field = "MillisSinceLastLoadedEdits"
+        cquery.aggs["34"].aggs["31"].avg.field = "BlockCapacity"
+        cquery.aggs["34"].aggs["32"].avg.field = "StaleDataNodes"
+        cquery.aggs["34"].aggs["33"].avg.field = "TotalFiles"
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def jvmNNquery(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+                            qmin_doc_count=1):
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["13"].date_histogram.field = "@timestamp"
+        cquery.aggs["13"].date_histogram.interval = qinterval
+        cquery.aggs["13"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["13"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["13"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["13"].date_histogram.extended_bounds.max = qlte
+
+        #NN JVM Metrics
+        cquery.aggs["13"].aggs["1"].avg.field = "MemNonHeapUsedM"
+        cquery.aggs["13"].aggs["2"].avg.field = "MemNonHeapCommittedM"
+        cquery.aggs["13"].aggs["3"].avg.field = "MemHeapUsedM"
+        cquery.aggs["13"].aggs["4"].avg.field = "MemHeapCommittedM"
+        cquery.aggs["13"].aggs["5"].avg.field = "MemHeapMaxM"
+        cquery.aggs["13"].aggs["6"].avg.field = "MemMaxM"
+        cquery.aggs["13"].aggs["7"].avg.field = "GcCountParNew"
+        cquery.aggs["13"].aggs["8"].avg.field = "GcTimeMillisParNew"
+        cquery.aggs["13"].aggs["9"].avg.field = "GcCountConcurrentMarkSweep"
+        cquery.aggs["13"].aggs["10"].avg.field = "GcTimeMillisConcurrentMarkSweep"
+        cquery.aggs["13"].aggs["11"].avg.field = "GcCount"
+        cquery.aggs["13"].aggs["12"].avg.field = "GcTimeMillis"
+        cquery.aggs["13"].aggs["14"].avg.field = "GcNumWarnThresholdExceeded"
+        cquery.aggs["13"].aggs["15"].avg.field = "GcNumInfoThresholdExceeded"
+        cquery.aggs["13"].aggs["16"].avg.field = "GcTotalExtraSleepTime"
+        cquery.aggs["13"].aggs["17"].avg.field = "ThreadsNew"
+        cquery.aggs["13"].aggs["18"].avg.field = "ThreadsRunnable"
+        cquery.aggs["13"].aggs["19"].avg.field = "ThreadsBlocked"
+        cquery.aggs["13"].aggs["20"].avg.field = "ThreadsWaiting"
+        cquery.aggs["13"].aggs["21"].avg.field = "ThreadsTimedWaiting"
+        cquery.aggs["13"].aggs["22"].avg.field = "ThreadsTerminated"
+        cquery.aggs["13"].aggs["23"].avg.field = "LogError"
+        cquery.aggs["13"].aggs["24"].avg.field = "LogFatal"
+        cquery.aggs["13"].aggs["25"].avg.field = "LogWarn"
+        cquery.aggs["13"].aggs["26"].avg.field = "LogInfo"
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def jvmMRQuery(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+                            qmin_doc_count=1):
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["13"].date_histogram.field = "@timestamp"
+        cquery.aggs["13"].date_histogram.interval = qinterval
+        cquery.aggs["13"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["13"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["13"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["13"].date_histogram.extended_bounds.max = qlte
+
+        # NN JVM Metrics
+        cquery.aggs["13"].aggs["1"].avg.field = "MemNonHeapUsedM"
+        cquery.aggs["13"].aggs["2"].avg.field = "MemNonHeapCommittedM"
+        cquery.aggs["13"].aggs["3"].avg.field = "MemHeapUsedM"
+        cquery.aggs["13"].aggs["4"].avg.field = "MemHeapCommittedM"
+        cquery.aggs["13"].aggs["5"].avg.field = "MemHeapMaxM"
+        cquery.aggs["13"].aggs["6"].avg.field = "MemMaxM"
+        cquery.aggs["13"].aggs["7"].avg.field = "GcCountParNew"
+        cquery.aggs["13"].aggs["8"].avg.field = "GcTimeMillisParNew"
+        cquery.aggs["13"].aggs["9"].avg.field = "GcCountConcurrentMarkSweep"
+        cquery.aggs["13"].aggs["10"].avg.field = "GcTimeMillisConcurrentMarkSweep"
+        cquery.aggs["13"].aggs["11"].avg.field = "GcCount"
+        cquery.aggs["13"].aggs["12"].avg.field = "GcTimeMillis"
+        cquery.aggs["13"].aggs["17"].avg.field = "ThreadsNew"
+        cquery.aggs["13"].aggs["18"].avg.field = "ThreadsRunnable"
+        cquery.aggs["13"].aggs["19"].avg.field = "ThreadsBlocked"
+        cquery.aggs["13"].aggs["20"].avg.field = "ThreadsWaiting"
+        cquery.aggs["13"].aggs["21"].avg.field = "ThreadsTimedWaiting"
+        cquery.aggs["13"].aggs["22"].avg.field = "ThreadsTerminated"
+        cquery.aggs["13"].aggs["23"].avg.field = "LogError"
+        cquery.aggs["13"].aggs["24"].avg.field = "LogFatal"
+        cquery.aggs["13"].aggs["25"].avg.field = "LogWarn"
+        cquery.aggs["13"].aggs["26"].avg.field = "LogInfo"
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def resourceQueueQuery(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+                            qmin_doc_count=1):
+
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["23"].date_histogram.field = "@timestamp"
+        cquery.aggs["23"].date_histogram.interval = qinterval
+        cquery.aggs["23"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["23"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["23"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["23"].date_histogram.extended_bounds.max = qlte
+
+        # Resource Manager Queue Metrics
+        cquery.aggs["23"].aggs["1"].avg.field = "running_0"
+        cquery.aggs["23"].aggs["2"].avg.field = "running_60"
+        cquery.aggs["23"].aggs["3"].avg.field = "running_300"
+        cquery.aggs["23"].aggs["4"].avg.field = "running_1440"
+        cquery.aggs["23"].aggs["5"].avg.field = "AppsSubmitted"
+        cquery.aggs["23"].aggs["6"].avg.field = "AppsPending"
+        cquery.aggs["23"].aggs["7"].avg.field = "AppsCompleted"
+        cquery.aggs["23"].aggs["8"].avg.field = "AllocatedMB"
+        cquery.aggs["23"].aggs["9"].avg.field = "AllocatedVCores"
+        cquery.aggs["23"].aggs["10"].avg.field = "AllocatedContainers"
+        cquery.aggs["23"].aggs["11"].avg.field = "AggregateContainersAllocated"
+        cquery.aggs["23"].aggs["12"].avg.field = "AggregateContainersReleased"
+        cquery.aggs["23"].aggs["13"].avg.field = "AvailableMB"
+        cquery.aggs["23"].aggs["14"].avg.field = "AvailableVCores"
+        cquery.aggs["23"].aggs["15"].avg.field = "PendingVCores"
+        cquery.aggs["23"].aggs["16"].avg.field = "PendingContainers"
+        cquery.aggs["23"].aggs["17"].avg.field = "ReservedMB"
+        cquery.aggs["23"].aggs["18"].avg.field = "ReservedContainers"
+        cquery.aggs["23"].aggs["19"].avg.field = "ActiveUsers"
+        cquery.aggs["23"].aggs["20"].avg.field = "ActiveApplications"
+        cquery.aggs["23"].aggs["21"].avg.field = "AppAttemptFirstContainerAllocationDelayNumOps"
+        cquery.aggs["23"].aggs["22"].avg.field = "AppAttemptFirstContainerAllocationDelayAvgTime"
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def clusterMetricsQuery(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+                            qmin_doc_count=1):
+
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["2"].date_histogram.field = "@timestamp"
+        cquery.aggs["2"].date_histogram.interval = qinterval
+        cquery.aggs["2"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["2"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["2"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["2"].date_histogram.extended_bounds.max = qlte
+
+        # Cluster Metrics
+        cquery.aggs["2"].aggs["1"].avg.field = "NumActiveNMs"
+        cquery.aggs["2"].aggs["3"].avg.field = "NumDecommissionedNMs"
+        cquery.aggs["2"].aggs["4"].avg.field = "NumLostNMs"
+        cquery.aggs["2"].aggs["5"].avg.field = "NumUnhealthyNMs"
+        cquery.aggs["2"].aggs["6"].avg.field = "AMLaunchDelayNumOps"
+        cquery.aggs["2"].aggs["7"].avg.field = "AMLaunchDelayAvgTime"
+        cquery.aggs["2"].aggs["8"].avg.field = "AMRegisterDelayNumOps"
+        cquery.aggs["2"].aggs["9"].avg.field = "AMRegisterDelayAvgTime"
+        cquery.aggs["2"].aggs["10"].avg.field = "NumRebootedNMs"
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def datanodeMetricsQuery(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+                            qmin_doc_count=1):
+
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["12"].date_histogram.field = "@timestamp"
+        cquery.aggs["12"].date_histogram.interval = qinterval
+        cquery.aggs["12"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["12"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["12"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["12"].date_histogram.extended_bounds.max = qlte
+
+        # DataNode Metrics
+        cquery.aggs["12"].aggs["1"].avg.field = "BytesWritten"
+        cquery.aggs["12"].aggs["2"].avg.field = "TotalWriteTime"
+        cquery.aggs["12"].aggs["3"].avg.field = "BytesRead"
+        cquery.aggs["12"].aggs["4"].avg.field = "TotalReadTime"
+        cquery.aggs["12"].aggs["5"].avg.field = "BlocksWritten"
+        cquery.aggs["12"].aggs["6"].avg.field = "BlocksRead"
+        cquery.aggs["12"].aggs["7"].avg.field = "BlocksReplicated"
+        cquery.aggs["12"].aggs["8"].avg.field = "BlocksRemoved"
+        cquery.aggs["12"].aggs["9"].avg.field = "BlocksVerified"
+        cquery.aggs["12"].aggs["10"].avg.field = "BlockVerificationFailures"
+        cquery.aggs["12"].aggs["11"].avg.field = "BlocksCached"
+        cquery.aggs["12"].aggs["13"].avg.field = "BlocksUncached"
+        cquery.aggs["12"].aggs["14"].avg.field = "ReadsFromLocalClient"
+        cquery.aggs["12"].aggs["15"].avg.field = "ReadsFromRemoteClient"
+        cquery.aggs["12"].aggs["16"].avg.field = "WritesFromLocalClient"
+        cquery.aggs["12"].aggs["17"].avg.field = "WritesFromRemoteClient"
+        cquery.aggs["12"].aggs["18"].avg.field = "BlocksGetLocalPathInfo"
+        cquery.aggs["12"].aggs["19"].avg.field = "RemoteBytesRead"
+        cquery.aggs["12"].aggs["20"].avg.field = "RemoteBytesWritten"
+        cquery.aggs["12"].aggs["21"].avg.field = "RamDiskBlocksWrite"
+        cquery.aggs["12"].aggs["22"].avg.field = "RamDiskBlocksWriteFallback"
+        cquery.aggs["12"].aggs["23"].avg.field = "RamDiskBytesWrite"
+        cquery.aggs["12"].aggs["24"].avg.field = "RamDiskBlocksReadHits"
+        cquery.aggs["12"].aggs["25"].avg.field = "RamDiskBlocksEvicted"
+        cquery.aggs["12"].aggs["27"].avg.field = "RamDiskBlocksEvictedWithoutRead"
+        cquery.aggs["12"].aggs["28"].avg.field = "RamDiskBlocksEvictionWindowMsNumOps"
+        cquery.aggs["12"].aggs["29"].avg.field = "RamDiskBlocksEvictionWindowMsAvgTime"
+        cquery.aggs["12"].aggs["30"].avg.field = "RamDiskBlocksLazyPersisted"
+        cquery.aggs["12"].aggs["31"].avg.field = "RamDiskBlocksDeletedBeforeLazyPersisted"
+        cquery.aggs["12"].aggs["32"].avg.field = "RamDiskBytesLazyPersisted"
+        cquery.aggs["12"].aggs["33"].avg.field = "RamDiskBlocksLazyPersistWindowMsNumOps"
+        cquery.aggs["12"].aggs["34"].avg.field = "RamDiskBlocksLazyPersistWindowMsAvgTime"
+        cquery.aggs["12"].aggs["35"].avg.field = "FsyncCount"
+        cquery.aggs["12"].aggs["36"].avg.field = "VolumeFailures"
+        cquery.aggs["12"].aggs["37"].avg.field = "DatanodeNetworkErrors"
+        cquery.aggs["12"].aggs["38"].avg.field = "ReadBlockOpNumOps"
+        cquery.aggs["12"].aggs["39"].avg.field = "ReadBlockOpAvgTime"
+        cquery.aggs["12"].aggs["40"].avg.field = "CopyBlockOpNumOps"
+        cquery.aggs["12"].aggs["41"].avg.field = "CopyBlockOpAvgTime"
+        cquery.aggs["12"].aggs["42"].avg.field = "ReplaceBlockOpNumOps"
+        cquery.aggs["12"].aggs["43"].avg.field = "ReplaceBlockOpAvgTime"
+        cquery.aggs["12"].aggs["44"].avg.field = "HeartbeatsNumOps"
+        cquery.aggs["12"].aggs["45"].avg.field = "HeartbeatsAvgTime"
+        cquery.aggs["12"].aggs["46"].avg.field = "BlockReportsNumOps"
+        cquery.aggs["12"].aggs["47"].avg.field = "BlockReportsAvgTime"
+        cquery.aggs["12"].aggs["48"].avg.field = "IncrementalBlockReportsNumOps"
+        cquery.aggs["12"].aggs["49"].avg.field = "IncrementalBlockReportsAvgTime"
+        cquery.aggs["12"].aggs["50"].avg.field = "CacheReportsNumOps"
+        cquery.aggs["12"].aggs["51"].avg.field = "CacheReportsAvgTime"
+        cquery.aggs["12"].aggs["52"].avg.field = "PacketAckRoundTripTimeNanosNumOps"
+        cquery.aggs["12"].aggs["53"].avg.field = "FlushNanosNumOps"
+        cquery.aggs["12"].aggs["54"].avg.field = "FlushNanosAvgTime"
+        cquery.aggs["12"].aggs["55"].avg.field = "FsyncNanosNumOps"
+        cquery.aggs["12"].aggs["56"].avg.field = "FsyncNanosAvgTime"
+        cquery.aggs["12"].aggs["57"].avg.field = "SendDataPacketBlockedOnNetworkNanosNumOps"
+        cquery.aggs["12"].aggs["58"].avg.field = "SendDataPacketBlockedOnNetworkNanosAvgTime"
+        cquery.aggs["12"].aggs["59"].avg.field = "SendDataPacketTransferNanosNumOps"
+        cquery.aggs["12"].aggs["60"].avg.field = "SendDataPacketTransferNanosAvgTime"
+        cquery.aggs["12"].aggs["61"].avg.field = "WriteBlockOpNumOps"
+        cquery.aggs["12"].aggs["62"].avg.field = "WriteBlockOpAvgTime"
+        cquery.aggs["12"].aggs["63"].avg.field = "BlockChecksumOpNumOps"
+        cquery.aggs["12"].aggs["64"].avg.field = "BlockChecksumOpAvgTime"
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def fsopDurationsQuery(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+                            qmin_doc_count=1):
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["2"].date_histogram.field = "@timestamp"
+        cquery.aggs["2"].date_histogram.interval = qinterval
+        cquery.aggs["2"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["2"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["2"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["2"].date_histogram.extended_bounds.max = qlte
+
+        # FSOpDuration metrics
+        cquery.aggs["2"].aggs["1"].avg.field = "ContinuousSchedulingRunNumOps"
+        cquery.aggs["2"].aggs["3"].avg.field = "ContinuousSchedulingRunAvgTime"
+        cquery.aggs["2"].aggs["4"].avg.field = "ContinuousSchedulingRunStdevTime"
+        # cquery.aggs["2"].aggs["5"].avg.field = "ContinuousSchedulingRunIMinTime"
+        # cquery.aggs["2"].aggs["6"].avg.field = "ContinuousSchedulingRunIMaxTime"
+        # cquery.aggs["2"].aggs["7"].avg.field = "ContinuousSchedulingRunMinTime"
+        # cquery.aggs["2"].aggs["8"].avg.field = "ContinuousSchedulingRunMaxTime"
+        cquery.aggs["2"].aggs["9"].avg.field = "ContinuousSchedulingRunINumOps"
+        cquery.aggs["2"].aggs["10"].avg.field = "NodeUpdateCallNumOps"
+        cquery.aggs["2"].aggs["11"].avg.field = "NodeUpdateCallAvgTime"
+        cquery.aggs["2"].aggs["12"].avg.field = "NodeUpdateCallStdevTime"
+        cquery.aggs["2"].aggs["13"].avg.field = "NodeUpdateCallMinTime"
+        cquery.aggs["2"].aggs["14"].avg.field = "NodeUpdateCallIMinTime"
+        cquery.aggs["2"].aggs["15"].avg.field = "NodeUpdateCallMaxTime"
+        cquery.aggs["2"].aggs["16"].avg.field = "NodeUpdateCallINumOps"
+        cquery.aggs["2"].aggs["17"].avg.field = "UpdateThreadRunNumOps"
+        cquery.aggs["2"].aggs["18"].avg.field = "UpdateThreadRunAvgTime"
+        cquery.aggs["2"].aggs["19"].avg.field = "UpdateThreadRunStdevTime"
+        cquery.aggs["2"].aggs["20"].avg.field = "UpdateThreadRunIMinTime"
+        cquery.aggs["2"].aggs["21"].avg.field = "UpdateThreadRunMinTime"
+        cquery.aggs["2"].aggs["22"].avg.field = "UpdateThreadRunMaxTime"
+        cquery.aggs["2"].aggs["23"].avg.field = "UpdateThreadRunINumOps"
+        cquery.aggs["2"].aggs["24"].avg.field = "UpdateCallNumOps"
+        cquery.aggs["2"].aggs["25"].avg.field = "UpdateCallAvgTime"
+        cquery.aggs["2"].aggs["26"].avg.field = "UpdateCallStdevTime"
+        cquery.aggs["2"].aggs["27"].avg.field = "UpdateCallIMinTime"
+        cquery.aggs["2"].aggs["28"].avg.field = "UpdateCallMinTime"
+        cquery.aggs["2"].aggs["29"].avg.field = "UpdateCallMaxTime"
+        cquery.aggs["2"].aggs["30"].avg.field = "UpdateCallINumOps"
+        cquery.aggs["2"].aggs["31"].avg.field = "PreemptCallNumOps"
+        cquery.aggs["2"].aggs["32"].avg.field = "PreemptCallAvgTime"
+        cquery.aggs["2"].aggs["33"].avg.field = "PreemptCallStdevTime"
+        cquery.aggs["2"].aggs["34"].avg.field = "PreemptCallINumOps"
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def shuffleQuery(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+                            qmin_doc_count=1):
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["2"].date_histogram.field = "@timestamp"
+        cquery.aggs["2"].date_histogram.interval = qinterval
+        cquery.aggs["2"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["2"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["2"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["2"].date_histogram.extended_bounds.max = qlte
+
+        #Shuffle metrics
+        cquery.aggs["2"].aggs["1"].avg.field = "ShuffleConnections"
+        cquery.aggs["2"].aggs["3"].avg.field = "ShuffleOutputBytes"
+        cquery.aggs["2"].aggs["4"].avg.field = "ShuffleOutputsFailed"
+        cquery.aggs["2"].aggs["5"].avg.field = "ShuffleOutputsOK"
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def queryByProcess(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+                            qmin_doc_count=1):
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["2"].date_histogram.field = "@timestamp"
+        cquery.aggs["2"].date_histogram.interval = qinterval
+        cquery.aggs["2"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["2"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["2"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["2"].date_histogram.extended_bounds.max = qlte
+
+        cquery.fields = ["*", "_source"]
+        cquery.script_fields = {}
+        cquery.fielddata_fields = ["@timestamp"]
+
+        cquery.sort = [{"@timestamp": {"order": "desc", "unmapped_type": "boolean"}}]
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def stormQuery(self, qstring, qgte, qlte, qsize, qinterval, bolts, spouts, wildCard=True, qtformat="epoch_millis",
+                            qmin_doc_count=1):
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["1"].date_histogram.field = "@timestamp"
+        cquery.aggs["1"].date_histogram.interval = qinterval
+        cquery.aggs["1"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["1"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["1"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["1"].date_histogram.extended_bounds.max = qlte
+
+        #Storm metrics
+        cquery.aggs["1"].aggs["2"].avg.field = "executorsTotal"
+        cquery.aggs["1"].aggs["3"].avg.field = "msgTimeout"
+        cquery.aggs["1"].aggs["4"].avg.field = "tasksTotal"
+        cquery.aggs["1"].aggs["5"].avg.field = "workersTotal"
+        cquery.aggs["1"].aggs["6"].avg.field = "topologyStats_10m_acked"
+        cquery.aggs["1"].aggs["7"].avg.field = "topologyStats_10m_completeLatency"
+        cquery.aggs["1"].aggs["8"].avg.field = "topologyStats_10m_emitted"
+        cquery.aggs["1"].aggs["9"].avg.field = "topologyStats_10m_failed"
+        cquery.aggs["1"].aggs["10"].avg.field = "topologyStats_10m_transferred"
+        cquery.aggs["1"].aggs["11"].avg.field = "topologyStats_10m_window"
+        cquery.aggs["1"].aggs["12"].avg.field = "topologyStats_1d_acked"
+        cquery.aggs["1"].aggs["13"].avg.field = "topologyStats_1d_completeLatency"
+        cquery.aggs["1"].aggs["14"].avg.field = "topologyStats_1d_emitted"
+        cquery.aggs["1"].aggs["15"].avg.field = "topologyStats_1d_failed"
+        cquery.aggs["1"].aggs["16"].avg.field = "topologyStats_1d_transferred"
+        cquery.aggs["1"].aggs["17"].avg.field = "topologyStats_1d_window"
+        cquery.aggs["1"].aggs["18"].avg.field = "topologyStats_3h_acked"
+        cquery.aggs["1"].aggs["19"].avg.field = "topologyStats_3h_completeLatency"
+        cquery.aggs["1"].aggs["20"].avg.field = "topologyStats_3h_emitted"
+        cquery.aggs["1"].aggs["21"].avg.field = "topologyStats_3h_failed"
+        cquery.aggs["1"].aggs["22"].avg.field = "topologyStats_3h_transferred"
+        cquery.aggs["1"].aggs["23"].avg.field = "topologyStats_3h_window"
+        cquery.aggs["1"].aggs["24"].avg.field = "topologyStats_all_acked"
+        cquery.aggs["1"].aggs["25"].avg.field = "topologyStats_all_completeLatency"
+        cquery.aggs["1"].aggs["26"].avg.field = "topologyStats_all_emitted"
+        cquery.aggs["1"].aggs["27"].avg.field = "topologyStats_all_failed"
+        cquery.aggs["1"].aggs["28"].avg.field = "topologyStats_all_transferred"
+
+        gcounter = 29
+        for n in range(0, bolts):
+            cquery.aggs["1"].aggs[str(gcounter+1)].avg.field = "bolts_%s_acked" % str(n)
+            cquery.aggs["1"].aggs[str(gcounter+2)].avg.field = "bolts_%s_capacity" % str(n)
+            cquery.aggs["1"].aggs[str(gcounter+3)].avg.field = "bolts_%s_emitted" % str(n)
+            cquery.aggs["1"].aggs[str(gcounter+4)].avg.field = "bolts_%s_executed" % str(n)
+            cquery.aggs["1"].aggs[str(gcounter+5)].avg.field = "bolts_%s_executors" % str(n)
+            cquery.aggs["1"].aggs[str(gcounter+6)].avg.field = "bolts_%s_failed" % str(n)
+            cquery.aggs["1"].aggs[str(gcounter+7)].avg.field = "bolts_%s_tasks" % str(n)
+            cquery.aggs["1"].aggs[str(gcounter+8)].avg.field = "bolts_%s_transferred" % str(n)
+            cquery.aggs["1"].aggs[str(gcounter+9)].avg.field = "bolts_%s_executeLatency" % str(n)
+            cquery.aggs["1"].aggs[str(gcounter+10)].avg.field = "bolts_%s_processLatency" % str(n)
+            gcounter += 10
+
+        for t in range(0, spouts):
+            cquery.aggs["1"].aggs[str(gcounter+1)].avg.field = "spouts_%s_acked" % str(t)
+            cquery.aggs["1"].aggs[str(gcounter+2)].avg.field = "spouts_%s_emitted" % str(t)
+            cquery.aggs["1"].aggs[str(gcounter+3)].avg.field = "spouts_%s_executors" % str(t)
+            cquery.aggs["1"].aggs[str(gcounter+4)].avg.field = "spouts_%s_failed" % str(t)
+            cquery.aggs["1"].aggs[str(gcounter+5)].avg.field = "spouts_%s_tasks" % str(t)
+            cquery.aggs["1"].aggs[str(gcounter+6)].avg.field = "spouts_%s_transferred" % str(t)
+            cquery.aggs["1"].aggs[str(gcounter+7)].avg.field = "spouts_%s_completeLatency" % str(t)
+            gcounter += 7
+
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def cassandraQuery(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+                            qmin_doc_count=1):
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["1"].date_histogram.field = "@timestamp"
+        cquery.aggs["1"].date_histogram.interval = qinterval
+        cquery.aggs["1"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["1"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["1"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["1"].date_histogram.extended_bounds.max = qlte
+
+        #Cassandra Metrics
+        cquery.aggs["1"].aggs["3"].terms.field = "type_instance"
+        cquery.aggs["1"].aggs["3"].terms.size = 0
+        cquery.aggs["1"].aggs["3"].terms.order["1"] = "desc"
+        cquery.aggs["1"].aggs["3"].aggs["1"].avg.field = "value"
+
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def mongoDBCounterQuery(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+                            qmin_doc_count=1):
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["1"].date_histogram.field = "@timestamp"
+        cquery.aggs["1"].date_histogram.interval = qinterval
+        cquery.aggs["1"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["1"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["1"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["1"].date_histogram.extended_bounds.max = qlte
+
+        # Cassandra Metrics
+        cquery.aggs["1"].aggs["3"].terms.field = "type_instance"
+        cquery.aggs["1"].aggs["3"].terms.size = 0
+        cquery.aggs["1"].aggs["3"].terms.order["1"] = "desc"
+        cquery.aggs["1"].aggs["3"].aggs["1"].avg.field = "value"
+
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def mongoDBGaugeQuery(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+                            qmin_doc_count=1):
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["1"].date_histogram.field = "@timestamp"
+        cquery.aggs["1"].date_histogram.interval = qinterval
+        cquery.aggs["1"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["1"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["1"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["1"].date_histogram.extended_bounds.max = qlte
+
+        # Cassandra Metrics
+        cquery.aggs["1"].aggs["3"].terms.field = "type_instance"
+        cquery.aggs["1"].aggs["3"].terms.size = 0
+        cquery.aggs["1"].aggs["3"].terms.order["1"] = "desc"
+        cquery.aggs["1"].aggs["3"].aggs["1"].avg.field = "value"
+
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def cepQuery(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+        qmin_doc_count=1):
+        cquery = Dict()
+        cquery.highlight.pre_tags = ["@kibana-highlighted-field@"]
+        cquery.highlight.post_tags = ["@/kibana-highlighted-field@"]
+        cquery.highlight.fields = {"*":{}}
+        cquery.highlight.require_field_match = False
+        cquery.highlight.fragment_size = 2147483647
+
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+
+        cquery.sort = [{"@timestamp": {"order": "desc", "unmapped_type": "boolean"}}]
+        cquery.size = qsize
+
+        cquery.aggs["2"].date_histogram.field = "@timestamp"
+        cquery.aggs["2"].date_histogram.interval = qinterval
+        cquery.aggs["2"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["2"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["2"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["2"].date_histogram.extended_bounds.max = qlte
+
+        cquery.fields = ["*", "_source"]
+        cquery.script_fields = {}
+        cquery.fielddata_fields = ["@timestamp"]
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def sparkQuery(self, qstring, qgte, qlte, qsize, qinterval, wildCard=True, qtformat="epoch_millis",
+        qmin_doc_count=1):
+        cquery = Dict()
+        cquery.query.filtered.query.query_string.query = qstring
+        cquery.query.filtered.query.query_string.analyze_wildcard = wildCard
+        cquery.query.filtered.filter.bool.must = [
+            {"range": {"@timestamp": {"gte": qgte, "lte": qlte, "format": qtformat}}}]
+        cquery.query.filtered.filter.bool.must_not = []
+        cquery.size = qsize
+
+        cquery.aggs["2"].date_histogram.field = "@timestamp"
+        cquery.aggs["2"].date_histogram.interval = qinterval
+        cquery.aggs["2"].date_histogram.time_zone = "Europe/Helsinki"
+        cquery.aggs["2"].date_histogram.min_doc_count = qmin_doc_count
+        cquery.aggs["2"].date_histogram.extended_bounds.min = qgte
+        cquery.aggs["2"].date_histogram.extended_bounds.max = qlte
+
+        # Spark metrics
+        cquery.aggs["2"].aggs["1"].avg.field = "jvm_total_committed"
+        cquery.aggs["2"].aggs["3"].avg.field = "jvm_heap_init"
+        cquery.aggs["2"].aggs["4"].avg.field = "jvm_total_used"
+        cquery.aggs["2"].aggs["5"].avg.field = "jvm_pools_Tenured-Gen_committed"
+        cquery.aggs["2"].aggs["6"].avg.field = "jvm_pools_Tenured-Gen_init"
+        cquery.aggs["2"].aggs["7"].avg.field = "jvm_pools_Tenured-Gen_max"
+        cquery.aggs["2"].aggs["8"].avg.field = "jvm_pools_Tenured-Gen_usage"
+        cquery.aggs["2"].aggs["9"].avg.field = "jvm_pools_Tenured-Gen_used"
+        cquery.aggs["2"].aggs["10"].avg.field = "jvm_pools_Survivor-Space_committed"
+        cquery.aggs["2"].aggs["11"].avg.field = "jvm_pools_Survivor-Space_init"
+        cquery.aggs["2"].aggs["12"].avg.field = "jvm_pools_Survivor-Space_max"
+        cquery.aggs["2"].aggs["13"].avg.field = "jvm_pools_Survivor-Space_usage"
+        cquery.aggs["2"].aggs["14"].avg.field = "jvm_pools_Survivor-Space_used"
+        cquery.aggs["2"].aggs["15"].avg.field = "jvm_pools_Metaspace_committed"
+        cquery.aggs["2"].aggs["16"].avg.field = "jvm_pools_Metaspace_init"
+        cquery.aggs["2"].aggs["17"].avg.field = "jvm_pools_Metaspace_max"
+        cquery.aggs["2"].aggs["18"].avg.field = "jvm_pools_Metaspace_usage"
+        cquery.aggs["2"].aggs["19"].avg.field = "jvm_pools_Metaspace_used"
+        cquery.aggs["2"].aggs["20"].avg.field = "jvm_pools_Eden-Space_committed"
+        cquery.aggs["2"].aggs["21"].avg.field = "jvm_pools_Eden-Space_init"
+        cquery.aggs["2"].aggs["22"].avg.field = "jvm_pools_Eden-Space_max"
+        cquery.aggs["2"].aggs["23"].avg.field = "jvm_pools_Eden-Space_usage"
+        cquery.aggs["2"].aggs["24"].avg.field = "jvm_pools_Eden-Space_used"
+        cquery.aggs["2"].aggs["25"].avg.field = "jvm_pools_Compressed-Class-Space_committed"
+        cquery.aggs["2"].aggs["26"].avg.field = "jvm_pools_Compressed-Class-Space_init"
+        cquery.aggs["2"].aggs["27"].avg.field = "jvm_pools_Compressed-Class-Space_max"
+        cquery.aggs["2"].aggs["28"].avg.field = "jvm_pools_Compressed-Class-Space_usage"
+        cquery.aggs["2"].aggs["29"].avg.field = "jvm_pools_Compressed-Class-Space_used"
+        cquery.aggs["2"].aggs["30"].avg.field = "jvm_pools_Code-Cache_committed"
+        cquery.aggs["2"].aggs["31"].avg.field = "jvm_pools_Code-Cache_init"
+        cquery.aggs["2"].aggs["32"].avg.field = "jvm_pools_Code-Cache_max"
+        cquery.aggs["2"].aggs["33"].avg.field = "jvm_pools_Code-Cache_usage"
+        cquery.aggs["2"].aggs["34"].avg.field = "jvm_pools_Code-Cache_used"
+        cquery.aggs["2"].aggs["35"].avg.field = "jvm_non-heap_committed"
+        cquery.aggs["2"].aggs["36"].avg.field = "jvm_non-heap_init"
+        cquery.aggs["2"].aggs["37"].avg.field = "jvm_non-heap_max"
+        cquery.aggs["2"].aggs["38"].avg.field = "jvm_non-heap_usage"
+        cquery.aggs["2"].aggs["39"].avg.field = "jvm_non-heap_used"
+        cquery.aggs["2"].aggs["40"].avg.field = "jvm_MarkSweepCompact_time"
+        cquery.aggs["2"].aggs["41"].avg.field = "jvm_MarkSweepCompact_count"
+        cquery.aggs["2"].aggs["42"].avg.field = "jvm_heap_committed"
+        cquery.aggs["2"].aggs["43"].avg.field = "jvm_heap_init"
+        cquery.aggs["2"].aggs["44"].avg.field = "jvm_heap_max"
+        cquery.aggs["2"].aggs["45"].avg.field = "jvm_heap_usage"
+        cquery.aggs["2"].aggs["46"].avg.field = "jvm_heap_used"
+        cquery.aggs["2"].aggs["47"].avg.field = "jvm_MarkSweepCompact_time"
+        cquery.aggs["2"].aggs["48"].avg.field = "jvm_MarkSweepCompact_count"
+        cquery.aggs["2"].aggs["49"].avg.field = "jvm_Copy_time"
+        cquery.aggs["2"].aggs["50"].avg.field = "jvm_Copy_count"
+        cquery.aggs["2"].aggs["51"].avg.field = "driver_jvm_total_used"
+        cquery.aggs["2"].aggs["52"].avg.field = "driver_jvm_total_max"
+        cquery.aggs["2"].aggs["53"].avg.field = "driver_jvm_total_init"
+        cquery.aggs["2"].aggs["54"].avg.field = "driver_jvm_total_committed"
+        cquery.aggs["2"].aggs["55"].avg.field = "driver_jvm_pools_Tenured-Gen_used"
+        cquery.aggs["2"].aggs["56"].avg.field = "driver_jvm_pools_Tenured-Gen_usage"
+        cquery.aggs["2"].aggs["57"].avg.field = "driver_jvm_pools_Tenured-Gen_max"
+        cquery.aggs["2"].aggs["58"].avg.field = "driver_jvm_pools_Tenured-Gen_init"
+        cquery.aggs["2"].aggs["59"].avg.field = "driver_jvm_pools_Tenured-Gen_committed"
+        cquery.aggs["2"].aggs["60"].avg.field = "driver_jvm_pools_Survivor-Space_used"
+        cquery.aggs["2"].aggs["61"].avg.field = "driver_jvm_pools_Survivor-Space_usage"
+        cquery.aggs["2"].aggs["62"].avg.field = "driver_jvm_pools_Survivor-Space_max"
+        cquery.aggs["2"].aggs["63"].avg.field = "driver_jvm_pools_Survivor-Space_init"
+        cquery.aggs["2"].aggs["64"].avg.field = "driver_jvm_pools_Survivor-Space_committed"
+        cquery.aggs["2"].aggs["65"].avg.field = "driver_jvm_pools_Metaspace_used"
+        cquery.aggs["2"].aggs["66"].avg.field = "driver_jvm_pools_Metaspace_usage"
+        cquery.aggs["2"].aggs["67"].avg.field = "driver_jvm_pools_Metaspace_max"
+        cquery.aggs["2"].aggs["68"].avg.field = "driver_jvm_pools_Metaspace_init"
+        cquery.aggs["2"].aggs["69"].avg.field = "driver_jvm_pools_Metaspace_committed"
+        cquery.aggs["2"].aggs["70"].avg.field = "driver_jvm_pools_Eden-Space_used"
+        cquery.aggs["2"].aggs["71"].avg.field = "driver_jvm_pools_Eden-Space_usage"
+        cquery.aggs["2"].aggs["72"].avg.field = "driver_jvm_pools_Eden-Space_max"
+        cquery.aggs["2"].aggs["73"].avg.field = "driver_jvm_pools_Eden-Space_init"
+        cquery.aggs["2"].aggs["74"].avg.field = "driver_jvm_pools_Eden-Space_committed"
+        cquery.aggs["2"].aggs["75"].avg.field = "driver_jvm_pools_Compressed-Class-Space_used"
+        cquery.aggs["2"].aggs["76"].avg.field = "driver_jvm_pools_Compressed-Class-Space_usage"
+        cquery.aggs["2"].aggs["77"].avg.field = "driver_jvm_pools_Survivor-Space_max"
+        cquery.aggs["2"].aggs["78"].avg.field = "driver_jvm_pools_Compressed-Class-Space_init"
+        cquery.aggs["2"].aggs["79"].avg.field = "driver_jvm_pools_Compressed-Class-Space_committed"
+        cquery.aggs["2"].aggs["80"].avg.field = "driver_jvm_pools_Code-Cache_used"
+        cquery.aggs["2"].aggs["81"].avg.field = "driver_jvm_pools_Code-Cache_usage"
+        cquery.aggs["2"].aggs["82"].avg.field = "driver_jvm_pools_Code-Cache_max"
+        cquery.aggs["2"].aggs["83"].avg.field = "driver_jvm_pools_Code-Cache_init"
+        cquery.aggs["2"].aggs["84"].avg.field = "driver_jvm_pools_Code-Cache_committed"
+        cquery.aggs["2"].aggs["85"].avg.field = "driver_jvm_non-heap_used"
+        cquery.aggs["2"].aggs["86"].avg.field = "driver_jvm_non-heap_usage"
+        cquery.aggs["2"].aggs["87"].avg.field = "driver_jvm_non-heap_max"
+        cquery.aggs["2"].aggs["88"].avg.field = "driver_jvm_non-heap_init"
+        cquery.aggs["2"].aggs["89"].avg.field = "driver_jvm_non-heap_committed"
+        cquery.aggs["2"].aggs["90"].avg.field = "driver_jvm_MarkSweepCompact_time"
+        cquery.aggs["2"].aggs["91"].avg.field = "driver_jvm_MarkSweepCompact_count"
+        cquery.aggs["2"].aggs["92"].avg.field = "driver_jvm_heap_used"
+        cquery.aggs["2"].aggs["93"].avg.field = "driver_jvm_heap_usage"
+        cquery.aggs["2"].aggs["94"].avg.field = "driver_jvm_heap_max"
+        cquery.aggs["2"].aggs["95"].avg.field = "driver_jvm_non-heap_init"
+        cquery.aggs["2"].aggs["96"].avg.field = "driver_jvm_heap_committed"
+        cquery.aggs["2"].aggs["97"].avg.field = "driver_jvm_Copy_time"
+        cquery.aggs["2"].aggs["98"].avg.field = "driver_jvm_Copy_count"
+        cquery.aggs["2"].aggs["99"].avg.field = "driver_ExecutorAllocationManager_executors_numberTargetExecutors"
+        cquery.aggs["2"].aggs["100"].avg.field = "driver_ExecutorAllocationManager_executors_numberMaxNeededExecutors"
+        cquery.aggs["2"].aggs["101"].avg.field = "driver_ExecutorAllocationManager_executors_numberExecutorsToAdd"
+        cquery.aggs["2"].aggs["102"].avg.field = "driver_ExecutorAllocationManager_executors_numberExecutorsPendingToRemove"
+        cquery.aggs["2"].aggs["103"].avg.field = "driver_ExecutorAllocationManager_executors_numberAllExecutors"
+        cquery.aggs["2"].aggs["104"].avg.field = "driver_DAGScheduler_stage_waitingStages"
+        cquery.aggs["2"].aggs["105"].avg.field = "driver_DAGScheduler_stage_runningStages"
+        cquery.aggs["2"].aggs["106"].avg.field = "driver_DAGScheduler_stage_failedStages"
+        cquery.aggs["2"].aggs["107"].avg.field = "driver_DAGScheduler_messageProcessingTime_count"
+        cquery.aggs["2"].aggs["108"].avg.field = "driver_DAGScheduler_messageProcessingTime_m1_rate"
+        cquery.aggs["2"].aggs["109"].avg.field = "driver_DAGScheduler_messageProcessingTime_m5_rate"
+        cquery.aggs["2"].aggs["110"].avg.field = "driver_DAGScheduler_messageProcessingTime_m15_rate"
+        cquery.aggs["2"].aggs["111"].avg.field = "driver_DAGScheduler_messageProcessingTime_max"
+        cquery.aggs["2"].aggs["112"].avg.field = "driver_DAGScheduler_messageProcessingTime_mean"
+        cquery.aggs["2"].aggs["113"].avg.field = "driver_DAGScheduler_messageProcessingTime_mean_rate"
+        cquery.aggs["2"].aggs["114"].avg.field = "driver_DAGScheduler_messageProcessingTime_min"
+        cquery.aggs["2"].aggs["115"].avg.field = "driver_DAGScheduler_job_allJobs"
+        cquery.aggs["2"].aggs["116"].avg.field = "driver_DAGScheduler_job_activeJobs"
+        cquery.aggs["2"].aggs["117"].avg.field = "driver_BlockManager_memory_remainingOnHeapMem_MB"
+        cquery.aggs["2"].aggs["118"].avg.field = "driver_BlockManager_memory_remainingOffHeapMem_MB"
+        cquery.aggs["2"].aggs["119"].avg.field = "driver_BlockManager_memory_remainingMem_MB"
+        cquery.aggs["2"].aggs["120"].avg.field = "driver_BlockManager_memory_onHeapMemUsed_MB"
+        cquery.aggs["2"].aggs["121"].avg.field = "driver_BlockManager_memory_offHeapMemUsed_MB"
+        cquery.aggs["2"].aggs["122"].avg.field = "driver_BlockManager_memory_memUsed_MB"
+        cquery.aggs["2"].aggs["123"].avg.field = "driver_BlockManager_memory_maxOnHeapMem_MB"
+        cquery.aggs["2"].aggs["124"].avg.field = "driver_BlockManager_memory_maxOffHeapMem_MB"
+        cquery.aggs["2"].aggs["125"].avg.field = "driver_BlockManager_memory_maxMem_MB"
+        cquery.aggs["2"].aggs["126"].avg.field = "driver_BlockManager_disk_diskSpaceUsed_MB"
+        cquery.aggs["2"].aggs["127"].avg.field = "2_executor_threadpool_maxPool_size"
+        cquery.aggs["2"].aggs["128"].avg.field = "2_executor_threadpool_currentPool_size"
+        cquery.aggs["2"].aggs["129"].avg.field = "2_executor_filesystem_hdfs_write_ops"
+        cquery.aggs["2"].aggs["130"].avg.field = "2_executor_filesystem_hdfs_write_bytes"
+        cquery.aggs["2"].aggs["131"].avg.field = "2_executor_filesystem_hdfs_read_ops"
+        cquery.aggs["2"].aggs["132"].avg.field = "2_executor_filesystem_hdfs_read_bytes"
+        cquery.aggs["2"].aggs["133"].avg.field = "2_executor_filesystem_hdfs_largeRead_ops"
+        cquery.aggs["2"].aggs["134"].avg.field = "2_executor_filesystem_file_write_ops"
+        cquery.aggs["2"].aggs["135"].avg.field = "2_executor_filesystem_file_write_bytes"
+        cquery.aggs["2"].aggs["136"].avg.field = "2_executor_filesystem_file_read_ops"
+        cquery.aggs["2"].aggs["137"].avg.field = "2_executor_filesystem_file_read_bytes"
+        cquery.aggs["2"].aggs["138"].avg.field = "2_executor_filesystem_file_largeRead_ops"
+        cquery.aggs["2"].aggs["139"].avg.field = "1_executor_threadpool_maxPool_size"
+        cquery.aggs["2"].aggs["140"].avg.field = "1_executor_threadpool_currentPool_size"
+        cquery.aggs["2"].aggs["141"].avg.field = "1_executor_filesystem_hdfs_write_ops"
+        cquery.aggs["2"].aggs["142"].avg.field = "1_executor_filesystem_hdfs_write_bytes"
+        cquery.aggs["2"].aggs["143"].avg.field = "1_executor_filesystem_hdfs_read_ops"
+        cquery.aggs["2"].aggs["144"].avg.field = "1_executor_filesystem_hdfs_read_bytes"
+        cquery.aggs["2"].aggs["145"].avg.field = "1_executor_filesystem_hdfs_largeRead_ops"
+        cquery.aggs["2"].aggs["146"].avg.field = "1_executor_filesystem_file_write_ops"
+        cquery.aggs["2"].aggs["147"].avg.field = "1_executor_filesystem_file_write_bytes"
+        cquery.aggs["2"].aggs["148"].avg.field = "1_executor_filesystem_file_read_ops"
+        cquery.aggs["2"].aggs["149"].avg.field = "1_executor_filesystem_file_read_bytes"
+        cquery.aggs["2"].aggs["150"].avg.field = "1_executor_filesystem_file_largeRead_ops"
+        cqueryd = cquery.to_dict()
+        return cqueryd
+
+    def sideQuery(self):
+        queryFile = os.path.join(self.queryDir, 'query.json')
+        with open(queryFile) as query:
+            squeryd = json.load(query)
+        return squeryd
+
+
+
+

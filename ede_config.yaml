@@ -1,0 +1,283 @@
+Connector:
+#  ESEndpoint: "85.120.206.59" # Elasticsearch endoint
+  PREndpoint: "10.9.8.136" # Prometheus endoint
+#  PREndpoint: hal720m.sage.ieat.ro
+  Dask:
+    SchedulerEndpoint: "local" # todo if not local give dask scheduler endoint
+    Scale: 3
+    SchedulerPort: 8787 # todo, set default to 8787, optional
+    EnforceCheck: False
+  MPort: 9200 # Moitoring port
+  KafkaEndpoint: 10.9.8.136
+  KafkaPort: 9092
+  KafkaTopic: edetopic
+#  Query: { "query": 'node_disk_written_bytes_total[5m]'}
+  Query: {"query": '{__name__=~"node.+"}[1m]'}
+  MetricsInterval: "1h" # Metrics datapoint interval definition
+  QSize: 0 # todo check if query size is needed
+  Index: time
+  QDelay: "10s" # Polling period for metrics fetching
+  Local: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/data/demo_data.csv # Define the path to the local file for training
+
+Mode:
+  Training: True
+  Validate: False
+  Detect: False
+
+#Filter:
+#  Columns:   # Which columns remain
+#    - "col1"
+#    - "col2"
+#    - "col4"
+#  Rows:
+#    ld: 145607979
+#    gd: 145607979
+#  DColumns:  # Which columns to delete
+#    - "col1"
+#    - "col2"
+#    - "col3"
+  Fillna: True # fill none values with 0
+  Dropna: True # delete columns woth none values
+
+#Filter:
+#  Columns: "colname;colname2;colname3"
+#  Rows: "ld:145607979;gd:145607979"
+#  DColumns: "colname;colname2;colname3"
+
+#Augmentation:
+#  Scaler: # if not used set to false
+#    StandardScaler:
+#      copy: True
+#      with_mean: True
+#      with_std: true
+#  Operations:
+#    STD:
+#      - cpu_load1:
+#          - node_load1_10.211.55.101:9100
+#          - node_load1_10.211.55.102:9100
+#          - node_load1_10.211.55.103:9100
+#      - memory:
+#          - node_memory_Active_anon_bytes_10.211.55.101:9100
+#          - node_memory_Active_anon_bytes_10.211.55.101:9100
+#          - node_memory_Active_anon_bytes_10.211.55.101:9100
+#    Mean:
+#      - network_flags:
+#          - node_network_flags_10.211.55.101:9100
+#          - node_network_flags_10.211.55.102:9100
+#          - node_network_flags_10.211.55.103:9100
+#      - network_out:
+#          - node_network_mtu_bytes_10.211.55.101:9100
+#          - node_network_mtu_bytes_10.211.55.102:9100
+#          - node_network_mtu_bytes_10.211.55.103:9100
+#    Median:
+#      - memory_file:
+#          - node_memory_Active_file_bytes_10.211.55.101:9100
+#          - node_memory_Active_file_bytes_10.211.55.102:9100
+#          - node_memory_Active_file_bytes_10.211.55.103:9100
+#      - memory_buffered:
+#          - node_memory_Buffers_bytes_10.211.55.101:9100
+#          - node_memory_Buffers_bytes_10.211.55.102:9100
+#          - node_memory_Buffers_bytes_10.211.55.103:9100
+#    RemoveFiltered: True
+
+#    Method: !!python/object/apply:edeuser.user_methods.wrapper_add_columns # user defined operation
+#      kwds:
+#        columns: !!python/tuple [node_load15_10.211.55.101:9100, node_load15_10.211.55.102:9100]
+#        column_name: sum_load15
+#  Categorical:
+#    - col1
+#    - col2
+#    OH: True
+
+
+# Analysis example
+#Analysis:
+#  Methods:
+#    - Method: !!python/object/apply:edeuser.user_methods.wrapper_analysis_corr
+#        kwds:
+#          name: Pearson1
+#          annot: False
+#          cmap: RdBu_r
+#          columns:
+#            - node_load1_10.211.55.101:9100
+#            - node_load1_10.211.55.102:9100
+#            - node_load1_10.211.55.103:9100
+#            - node_memory_Cached_bytes_10.211.55.101:9100
+#            - node_memory_Cached_bytes_10.211.55.102:9100
+#            - node_memory_Cached_bytes_10.211.55.103:9100
+#            - time
+#          location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+#    - Method: !!python/object/apply:edeuser.user_methods.wrapper_analysis_plot
+#        kwds:
+#          name: line1
+#          columns:
+#            - node_load1_10.211.55.101:9100
+#            - node_load1_10.211.55.102:9100
+#            - node_load1_10.211.55.103:9100
+#            - time
+#          location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+#  Solo: True
+
+Validation:
+#  Backend: Dask
+  DataSource: /path/to/data # if datasource is not defined use default from data connector, last column is ground truth named "Target"
+  Treashold: 0.2 #  improvement percent
+  Models:
+    - m1
+    - m2
+
+# User defined clustering custom
+#Training:
+#  Type: clustering
+#  Method: !!python/object/apply:edeuser.user_methods.user_iso
+#    kwds:
+#      n_estimators: 100
+#      contamination: auto
+#      max_features: 1
+#      n_jobs: 2
+#      warm_start: False
+#      random_state: 45
+#      bootstrap: True
+#      verbose: True
+#      max_samples: 1
+#  Export: asp
+
+# User defined clustering example sklearn
+#Training:
+#  Type: clustering
+#  Method: !!python/object/apply:sklearn.ensemble._iforest.IsolationForest  # DONT forger ../apply
+#    _sklearn_version: '0.22.1'
+#    behaviour: deprecated
+#    n_estimators: 100
+#    contamination: auto
+#    max_features: 1
+#    n_jobs: 2
+#    warm_start: False
+#    random_state: 45
+#    bootstrap: True
+#    verbose: True
+#    max_samples: 1
+#  Export: asp
+
+# Clustering example
+#Training:
+#  Type: clustering
+#  Method: isoforest
+#  Export: asp2
+#  MethodSettings:
+#    n_estimators: 10
+#    max_samples: 10
+#    contamination: 0.1
+#    verbose: True
+#    bootstrap: True
+
+
+#  Classification example
+#Training:
+#  Type: classification
+##  Method: randomforest
+#  Method: !!python/object/apply:sklearn.ensemble.AdaBoostClassifier  # DONT forger ../apply
+#    _sklearn_version: '0.22.1'
+#    n_estimators: 100
+#    learning_rate: 1
+#    algorithm: SAMME.R
+#  Target: target
+#  Export: aspc
+#  ValidRatio: 0.2
+#  TrainScore: True # expensive if set to false only test scores are computed
+#  ReturnEstimators: True
+##  CV: 5
+##  CV:
+##    Type: StratifiedKFold  # user defined all from sklearn
+##    Params:
+##      n_splits: 5
+##      shuffle: True
+##      random_state: 5
+#  MethodSettings:
+#    n_estimators: 10
+#    criterion: gini
+#    max_features: auto
+#    max_depth: 3
+#    min_samples_split: 2
+#    min_samples_leaf: 1
+#    min_weight_fraction_leaf: 0
+#    bootstrap: True
+#    n_jobs: -1
+#    random_state: 42
+#    verbose: 1
+#  Scorers:
+#    Scorer_list:
+#      - Scorer:
+#          Scorer_name: AUC
+#          skScorer: roc_auc
+#      - Scorer:
+#          Scorer_name: Jaccard_Index
+#          skScorer: jaccard
+#      - Scorer:
+#          Scorer_name: Balanced_Acc
+#          skScorer: balanced_accuracy
+#    User_scorer1: f1_score # key is user defined, can be changed same as Scorer_name
+
+
+
+# For HPO methods
+Training:
+  Type: hpo
+  HPOMethod: Random  # random, grid, bayesian, tpot
+  HPOParam:
+    n_iter: 2
+    n_jobs: -1
+    refit: Balanced_Acc  # if multi metric used, refit should be metric name, mandatory
+    verbose: True
+  Method: randomforest
+  ParamDistribution:
+    n_estimators:
+      - 10
+      - 100
+    max_depth:
+      - 2
+      - 3
+  Target: target
+  Export: aspc
+  CV: 8
+#  CV:
+#    Type: StratifiedKFold  # user defined all from sklearn
+#    Params:
+#      n_splits: 5
+#      shuffle: True
+#      random_state: 5
+  Scorers:
+    Scorer_list:
+      - Scorer:
+          Scorer_name: AUC
+          skScorer: roc_auc
+      - Scorer:
+          Scorer_name: Jaccard_Index
+          skScorer: jaccard
+      - Scorer:
+          Scorer_name: Balanced_Acc
+          skScorer: balanced_accuracy
+    User_scorer1: f1_score # key is user defined, can be changed same as Scorer_name
+
+
+
+
+Detect:
+  Method: RandomForest
+  Type: classification
+  Load: aspc
+#  Scaler: StandardScaler
+
+
+Point:
+  Memory: cached:gd:231313;buffered:ld:312123;used:ld:12313;free:gd:23123
+  Load: shortterm:gd:2.0;midterm:ld:0.1;longterm:gd:1.0
+  Network: tx:gd:34344;rx:ld:323434
+
+Misc:
+  heap: 512m
+  checkpoint: false
+  delay: 15s
+  interval: 30m
+  resetindex: false
+  point: false
