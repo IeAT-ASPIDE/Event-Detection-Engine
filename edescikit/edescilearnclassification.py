@@ -679,7 +679,7 @@ class SciClassification:
                         X,
                         y, classification_method=None):
         user_m = False
-        if classification_method is not None and not 'randomforest':  # TODO fix
+        if classification_method is not None and classification_method != 'randomforest':  # TODO fix
             user_m = True
             try:
                 classification_type = str(classification_method).split('(')[0]

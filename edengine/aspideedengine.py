@@ -228,7 +228,7 @@ class EDEngine:
 
     def getDataPR(self,
                   detect=False):
-        if self.local is not None:
+        if self.local is not None and not detect:
             if checkFile(self.local):
                 df_qpr = self.edeConnector.localData(self.local)
                 logger.info('[{}] : [INFO] Loading local training file {}'.format(
@@ -1186,6 +1186,8 @@ class EDEngine:
                     else:
                         anomalies['method'] = self.detectmethod
                         anomalies['interval'] = self.qinterval
+                        logger.info('[{}] : [DEBUG] Reporting detected anomalies: {}'.format(
+                            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), anomalies))
                         self.reportAnomaly(anomalies, dask=True)
                         # print(anomalies)
                         sleep(parseDelay(self.delay))
@@ -1237,6 +1239,8 @@ class EDEngine:
                     else:
                         anomalies['method'] = self.detectmethod
                         anomalies['interval'] = self.qinterval
+                        logger.info('[{}] : [DEBUG] Reporting detected anomalies: {}'.format(
+                            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), anomalies))
                         self.reportAnomaly(anomalies, dask=True)
                         # print(anomalies)
                         sleep(parseDelay(self.delay))
