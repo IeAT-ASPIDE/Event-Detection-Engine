@@ -57,6 +57,7 @@ class EDEngine:
         self.detectionscaler = settingsDict['detectionscaler']
         self.hpomethod = settingsDict['hpomethod']
         self.hpoparam = settingsDict['hpoparam']
+        self.tpot = settingsDict['tpot']
         self.ParamDistribution = settingsDict['ParamDistribution']
         self.nodes = nodesParse(settingsDict['nodes'])
         self.qinterval = settingsDict['qinterval']
@@ -697,7 +698,7 @@ class EDEngine:
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
             checkpoint = str2Bool(self.checkpoint)
             pr_data = self.getDataPR()
-            if self.traintype == 'classification' or self.traintype == 'hpo':
+            if self.traintype == 'classification' or self.traintype == 'hpo' or self.traintype =='tpot':
                 pr_data, y = self.dformat.getGT(pr_data, gt=self.target)
             udata = self.filterData(pr_data)
             # print(list(udata.index))
@@ -768,6 +769,8 @@ class EDEngine:
                 logger.info('[{}] : [INFO] Classification Complete.'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
             elif self.traintype == 'hpo':
+                logger.info('[{}] : [INFO] Stating HPO.'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
                 classede = cdmon.SciClassification(self.modelsDir, self.dataDir, self.checkpoint, self.export,
                                                    training=self.trainingSet, validation=self.validationSet,
                                                    validratio=self.validratio, compare=self.compare, cv=self.cv,
@@ -780,9 +783,18 @@ class EDEngine:
                                         hpomethod=self.hpomethod,
                                         hpoparam = self.hpoparam,
                                         classification_method=self.trainmethod)
-
-                print('hpo')
-
+                logger.info('[{}] : [INFO] HPO Completed.'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+            elif self.traintype == 'tpot':
+                classede = cdmon.SciClassification(self.modelsDir, self.dataDir, self.checkpoint, self.export,
+                                                   training=self.trainingSet, validation=self.validationSet,
+                                                   validratio=self.validratio, compare=self.compare, cv=self.cv,
+                                                   trainscore=self.trainscore, scorers=self.scorers,
+                                                   returnestimators=self.returnestimators)
+                print(self.tpot)
+                clf = classede.dask_tpot(self.tpot,
+                                         X=pr_data,
+                                         y=y)
 
             else:
                 logger.error('[{}] : [ERROR] Unknown training type {}'.format(

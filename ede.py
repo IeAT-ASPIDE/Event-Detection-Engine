@@ -29,6 +29,7 @@ from dask.distributed import Client, LocalCluster
 from signal import signal, SIGINT
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 def main(argv,
@@ -63,6 +64,7 @@ def main(argv,
     settings.local = None
     settings.train = None
     settings.hpomethod = None
+    settings.tpot = None
     settings.ParamDistribution = None
     settings.detecttype = None # TODO
     settings.traintype = None
@@ -417,9 +419,12 @@ def main(argv,
             logger.info('[%s] : [INFO] Train Method is set to %s from conf',
                             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings["trainMethod"])
         except:
-            logger.error('[%s] : [ERROR] Train Method is not set in conf or comandline!',
-                                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
-            sys.exit(1)
+            try:
+                settings['Training']['TPOTParam']
+            except:
+                logger.error('[%s] : [ERROR] Train Method is not set in conf or comandline!',
+                                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
+                sys.exit(1)
     else:
         logger.info('[%s] : [INFO] Train Method is set to %s from comandline',
                             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings["trainMethod"])
@@ -481,6 +486,21 @@ def main(argv,
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings.hpomethod))
                 sys.exit(1)
             else:
+                pass
+    if settings.tpot is None:
+        try:
+            settings.tpot = readCnf['Training']['TPOTParam']
+            logger.info('[{}] : [INFO] TPO Parameters  found.'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+        except:
+            try:
+                if readCnf['Training']['Type'] == 'tpot':
+                    settings.tpot = {}
+                    logger.warning('[{}] : [WARN] TPO Parameters not found. Using defaults'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+                else:
+                    pass
+            except:
                 pass
 
     if settings["export"] is None:

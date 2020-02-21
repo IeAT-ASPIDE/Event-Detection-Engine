@@ -35,6 +35,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.cluster import DBSCAN
 from sklearn.metrics import make_scorer, SCORERS
+import yaml
 import joblib
 import pickle as pickle
 from util import str2Bool
@@ -42,6 +43,8 @@ import glob
 from util import ut2hum
 import itertools
 pd.options.mode.chained_assignment = None
+import warnings
+warnings.filterwarnings("ignore")
 
 
 class SciClassification:
@@ -625,6 +628,70 @@ class SciClassification:
         self.__serializemodel(dt, 'DecisionTree', mname)
         return dt
 
+    def dask_tpot(self,
+                  settings,
+                  X,
+                  y):
+        from tpot import TPOTClassifier
+        if self.cv is None:
+            cv = self.cv
+            logger.info('[{}] : [INFO] TPOT Cross Validation not set, using default'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+        elif isinstance(self.cv, int):
+            logger.info('[{}] : [INFO] TPOT Cross Validation set to {} folds:'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), self.cv))
+            cv = self.cv
+        else:
+            try:
+                logger.info('[{}] : [INFO] TPOT Cross Validation set to use {}'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), self.cv['Type']))
+            except:
+                logger.error('[{}] : [ERROR] TPOT Cross Validation split generator type not set!'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+                sys.exit(1)
+            cv = self.__crossValidGenerator(self.cv)
+        settings.update({'cv': cv})
+        tp = TPOTClassifier(**settings)
+        for k, v in settings.items():
+            logger.info('[{}] : [INFO] TPOT parame {} set to {}'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), k, v))
+        # tp = TPOTClassifier(
+        #     generations=2,
+        #     population_size=2,
+        #     offspring_size=2,
+        #     mutation_rate=0.9,
+        #     crossover_rate=0.1,
+        #     scoring='f1_macro',
+        #     max_time_mins=1,
+        #     max_eval_time_mins=5,
+        #     random_state=42,
+        #     cv=2,
+        #     n_jobs=-1,
+        #     verbosity=3,
+        #     config_dict=tpot.config.classifier_config_dict_light,
+        #     use_dask=True,
+        #
+        # )
+
+        logger.info('[{}] : [INFO] Starting TPOT Optimization ...'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+        try:
+            pipeline_model = tp.fit(X, y)
+        except Exception as inst:
+            logger.error('[{}] : [ERROR] Failed to run TPOT optimization with {} and {}'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(inst), inst.args))
+            sys.exit(1)
+        # print(pipeline_model.score(X, y))
+        logger.info('[{}] : [INFO] TPOT optimized best pipeline is: {}'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'),
+            str(pipeline_model.fitted_pipeline_.steps)))
+        # print(str(pipeline_model.fitted_pipeline_.steps))
+        # print(pipeline_model.pareto_front_fitted_pipelines_)
+        # print(pipeline_model.evaluated_individuals_)
+        self.__serializemodel(model=pipeline_model.fitted_pipeline_, method='TPOT', mname=self.export)
+
+        return 0
+
     def dask_classifier(self, settings,
                         mname,
                         X,
@@ -926,6 +993,15 @@ class SciClassification:
             for k, v in sr_clf.best_params_.items():
                 logger.info('[{}] : [INFO] Classifier {} param {} best value {}'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), classification_type, k, v))
+            best_conf_loc = os.path.join(self.modelDir,
+                                         "{}_HPO_{}_best_{}_config.yaml".format(classification_type, hpomethod,
+                                                                                self.export))
+            logger.info('[{}] : [INFO] Saving best configuration to {}'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), best_conf_loc))
+
+            with open(best_conf_loc, 'w') as yaml_config:
+                yaml.dump(sr_clf.best_params_, yaml_config, default_flow_style=False)
+
             if isinstance(self.cv, dict):
                 cv_name = self.cv['Type']
             elif self.cv is None:
@@ -943,15 +1019,9 @@ class SciClassification:
             # print(sr_clf.best_estimator_)
             # print(sr_clf.cv_results_)
             self.__serializemodel(model=sr_clf.best_estimator_, method=classification_type, mname=self.export)
-
-
         else:
             logger.warning('[{}] : [WARN] Skipping HPO Report ...'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
-
-
-
-        return 0
 
 
     def __appendPredictions(self, method, mname, data, pred, pred_proba=None):

@@ -13,7 +13,7 @@ Connector:
   KafkaTopic: edetopic
 #  Query: { "query": 'node_disk_written_bytes_total[5m]'}
   Query: {"query": '{__name__=~"node.+"}[1m]'}
-  MetricsInterval: "1h" # Metrics datapoint interval definition
+  MetricsInterval: "1m" # Metrics datapoint interval definition
   QSize: 0 # todo check if query size is needed
   Index: time
   QDelay: "10s" # Polling period for metrics fetching
@@ -21,8 +21,8 @@ Connector:
 
 Mode:
   Training: True
-  Validate: False
   Detect: False
+  Validate: False
 
 #Filter:
 #  Columns:   # Which columns remain
@@ -118,13 +118,7 @@ Mode:
 #          location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
 #  Solo: True
 
-Validation:
-#  Backend: Dask
-  DataSource: /path/to/data # if datasource is not defined use default from data connector, last column is ground truth named "Target"
-  Treashold: 0.2 #  improvement percent
-  Models:
-    - m1
-    - m2
+
 
 # User defined clustering custom
 #Training:
@@ -221,46 +215,71 @@ Validation:
 
 
 # For HPO methods
-Training:
-  Type: hpo
-  HPOMethod: Random  # random, grid, bayesian, tpot
-  HPOParam:
-    n_iter: 2
-    n_jobs: -1
-    refit: Balanced_Acc  # if multi metric used, refit should be metric name, mandatory
-    verbose: True
-  Method: randomforest
-  ParamDistribution:
-    n_estimators:
-      - 10
-      - 100
-    max_depth:
-      - 2
-      - 3
-  Target: target
-  Export: aspc
-  CV: 8
+#Training:
+#  Type: hpo
+#  HPOMethod: Random  # random, grid, bayesian, tpot
+#  HPOParam:
+#    n_iter: 2
+#    n_jobs: -1
+#    refit: Balanced_Acc  # if multi metric used, refit should be metric name, mandatory
+#    verbose: True
+#  Method: randomforest
+#  ParamDistribution:
+#    n_estimators:
+#      - 10
+#      - 100
+#    max_depth:
+#      - 2
+#      - 3
+#  Target: target
+#  Export: aspc
+##  CV: 8
 #  CV:
 #    Type: StratifiedKFold  # user defined all from sklearn
 #    Params:
 #      n_splits: 5
 #      shuffle: True
 #      random_state: 5
-  Scorers:
-    Scorer_list:
-      - Scorer:
-          Scorer_name: AUC
-          skScorer: roc_auc
-      - Scorer:
-          Scorer_name: Jaccard_Index
-          skScorer: jaccard
-      - Scorer:
-          Scorer_name: Balanced_Acc
-          skScorer: balanced_accuracy
-    User_scorer1: f1_score # key is user defined, can be changed same as Scorer_name
+#  Scorers:
+#    Scorer_list:
+#      - Scorer:
+#          Scorer_name: AUC
+#          skScorer: roc_auc
+#      - Scorer:
+#          Scorer_name: Jaccard_Index
+#          skScorer: jaccard
+#      - Scorer:
+#          Scorer_name: Balanced_Acc
+#          skScorer: balanced_accuracy
+#    User_scorer1: f1_score # key is user defined, can be changed same as Scorer_name
 
 
-
+# TPOT Optimizer
+Training:
+  Type: tpot
+  TPOTParam:
+    generations: 2
+    population_size: 2
+    offspring_size: 2
+    mutation_rate: 0.9
+    crossover_rate: 0.1
+    scoring: balanced_accuracy # Scoring different from HPO check TPOT documentation
+    max_time_mins: 1
+    max_eval_time_mins: 5
+    random_state: 42
+    n_jobs: -1
+    verbosity: 2
+    config_dict: TPOT light # "TPOT light", "TPOT MDR", "TPOT sparse" or None
+    use_dask: True
+  Target: target
+  Export: aspc
+  #  CV: 8
+  CV:
+    Type: StratifiedKFold  # user defined all from sklearn
+    Params:
+      n_splits: 5
+      shuffle: True
+      random_state: 5
 
 Detect:
   Method: RandomForest
@@ -268,16 +287,49 @@ Detect:
   Load: aspc
 #  Scaler: StandardScaler
 
-
 Point:
-  Memory: cached:gd:231313;buffered:ld:312123;used:ld:12313;free:gd:23123
-  Load: shortterm:gd:2.0;midterm:ld:0.1;longterm:gd:1.0
-  Network: tx:gd:34344;rx:ld:323434
+  Memory:
+    cached:
+      gd: 231313
+      ld: 312334
+    buffered:
+      gd: 231313
+      ld: 312334
+    used:
+      gd: 231313
+      ld: 312334
+  Load:
+    shortterm:
+      gd: 231313
+      ld: 312334
+    midterm:
+      gd: 231313
+      ld: 312334
+  Network:
+    tx:
+      gd: 231313
+      ld: 312334
+    rx:
+      gd: 231313
+      ld: 312334
+
+#Point:
+#  Memory: cached:gd:231313;buffered:ld:312123;used:ld:12313;free:gd:23123
+#  Load: shortterm:gd:2.0;midterm:ld:0.1;longterm:gd:1.0
+#  Network: tx:gd:34344;rx:ld:323434
+
+# Not yet Implemented
+#Validation:
+#  DataSource: /path/to/data # if datasource is not defined use default from data connector, last column is ground truth named "Target"
+#  Treashold: 0.2 #  improvement percent
+#  Models:
+#    - m1
+#    - m2
 
 Misc:
   heap: 512m
-  checkpoint: false
+  checkpoint: False
   delay: 15s
   interval: 30m
-  resetindex: false
-  point: false
+  resetindex: False
+  point: False
