@@ -724,6 +724,7 @@ class EDEngine:
                         remove_filtered = True
                 except:
                     operations = False
+                    remove_filtered = False
 
                 asudata = self.dformat.computeOnColumns(sudata, operations=operations, remove_filtered=remove_filtered)
                 if checkpoint:
@@ -1177,6 +1178,7 @@ class EDEngine:
                                 remove_filtered = True
                         except:
                             operations = False
+                            remove_filtered = False
                         asudata = self.dformat.computeOnColumns(sudata, operations=operations, remove_filtered=remove_filtered)
                     else:
                         asudata = sudata
@@ -1226,6 +1228,7 @@ class EDEngine:
                                 remove_filtered = True
                         except:
                             operations = False
+                            remove_filtered = False
                         asudata = self.dformat.computeOnColumns(sudata, operations=operations,
                                                                 remove_filtered=remove_filtered)
                     else:
