@@ -1,0 +1,201 @@
+Connector:
+#  ESEndpoint: 85.120.206.59 # Elasticsearch endoint
+#  PREndpoint: 10.9.8.136 # Prometheus endoint
+  PREndpoint: hal720m.sage.ieat.ro
+  Dask:
+    SchedulerEndpoint: local # if not local add DASK schedueler endpoint
+    Scale: 3 # Number of workers if local othervise ignored
+    SchedulerPort: 8787 # This is the default point
+    EnforceCheck: False # Irrelevant for local
+  MPort: 9200 # Moitoring port
+  KafkaEndpoint: 10.9.8.136
+  KafkaPort: 9092
+  KafkaTopic: edetopic
+#  Query: { "query": 'node_disk_written_bytes_total[5m]'}
+  Query: {"query": '{__name__=~"node.+"}[1m]'}
+  MetricsInterval: "1m" # Metrics datapoint interval definition
+  QSize: 0 # todo check if query size is needed
+  Index: time
+  QDelay: "10s" # Polling period for metrics fetching
+  Local: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/data/demo_data.csv # Define the path to the local file for training
+
+Mode:
+  Training: False
+  Validate: False
+  Detect: True
+
+
+#Filter:
+##  Columns:   # Which columns remain
+##    - "col1"
+##    - "col2"
+##    - "col4"
+##  Rows:
+##    ld: 145607979
+##    gd: 145607979
+#  DColumns:  # Which columns to delete
+#    - node_boot_time_seconds_10.211.55.101:9100
+#    - node_boot_time_seconds_10.211.55.102:9100
+#    - node_boot_time_seconds_10.211.55.103:9100
+#  Fillna: True # fill none values with 0
+#  Dropna: True # delete columns woth none values
+#
+#Augmentation:
+#  Scaler: # if not used set to false
+#    StandardScaler:   # All scalers from scikitlearn
+#      copy: True
+#      with_mean: True
+#      with_std: true
+#  Operations:
+#    STD:
+#      - cpu_load1:
+#          - node_load1_10.211.55.101:9100
+#          - node_load1_10.211.55.102:9100
+#          - node_load1_10.211.55.103:9100
+#      - memory:
+#          - node_memory_Active_anon_bytes_10.211.55.101:9100
+#          - node_memory_Active_anon_bytes_10.211.55.101:9100
+#          - node_memory_Active_anon_bytes_10.211.55.101:9100
+#    Mean:
+#      - network_flags:
+#          - node_network_flags_10.211.55.101:9100
+#          - node_network_flags_10.211.55.102:9100
+#          - node_network_flags_10.211.55.103:9100
+#      - network_out:
+#          - node_network_mtu_bytes_10.211.55.101:9100
+#          - node_network_mtu_bytes_10.211.55.102:9100
+#          - node_network_mtu_bytes_10.211.55.103:9100
+#    Median:
+#      - memory_file:
+#          - node_memory_Active_file_bytes_10.211.55.101:9100
+#          - node_memory_Active_file_bytes_10.211.55.102:9100
+#          - node_memory_Active_file_bytes_10.211.55.103:9100
+#      - memory_buffered:
+#          - node_memory_Buffers_bytes_10.211.55.101:9100
+#          - node_memory_Buffers_bytes_10.211.55.102:9100
+#          - node_memory_Buffers_bytes_10.211.55.103:9100
+#    RemoveFiltered: True
+#
+#    Method: !!python/object/apply:edeuser.user_methods.wrapper_add_columns # user defined operation
+#      kwds:
+#        columns: !!python/tuple [node_load15_10.211.55.101:9100, node_load15_10.211.55.102:9100]
+#        column_name: sum_load15
+##  Categorical:
+##    - col1
+##    - col2
+##    OH: True
+
+# For HPO methods
+#Training:
+#  Type: hpo
+#  HPOMethod: Grid  # random, grid, bayesian, tpot
+#  HPOParam:
+##    n_iter: 2
+#    n_jobs: -1
+#    refit: Balanced_Acc  # if multi metric used, refit should be metric name, mandatory
+#    verbose: True
+#  Method: randomforest
+#  ParamDistribution:
+#    n_estimators:
+#      - 10
+#      - 100
+#    max_depth:
+#      - 2
+#      - 3
+#  Target: target
+#  Export: hpo_1
+##  CV: 8
+#  CV:
+#    Type: StratifiedKFold  # user defined all from sklearn
+#    Params:
+#      n_splits: 5
+#      shuffle: True
+#      random_state: 5
+#  Scorers:
+#    Scorer_list:
+#      - Scorer:
+#          Scorer_name: AUC
+#          skScorer: roc_auc
+#      - Scorer:
+#          Scorer_name: Jaccard_Index
+#          skScorer: jaccard
+#      - Scorer:
+#          Scorer_name: Balanced_Acc
+#          skScorer: balanced_accuracy
+#    User_scorer1: f1_score # key is user defined, can be changed same as Scorer_name
+
+
+# TPOT Optimizer
+Training:
+  Type: tpot
+  TPOTParam:
+    generations: 2
+    population_size: 2
+    offspring_size: 2
+    mutation_rate: 0.9
+    crossover_rate: 0.1
+    scoring: balanced_accuracy # Scoring different from HPO check TPOT documentation
+    max_time_mins: 1
+    max_eval_time_mins: 5
+    random_state: 42
+    n_jobs: -1
+    verbosity: 2
+    config_dict: TPOT light # "TPOT light", "TPOT MDR", "TPOT sparse" or None
+    use_dask: True
+  Target: target
+  Export: tpotopt
+  #  CV: 8
+  CV:
+    Type: StratifiedKFold  # user defined all from sklearn
+    Params:
+      n_splits: 5
+      shuffle: True
+      random_state: 5
+
+Detect:
+  Method: Tpot
+  Type: classification
+  Load: tpotopt
+#  Scaler: StandardScaler # Same as for training
+
+Point:
+  Memory:
+    cached:
+      gd: 231313
+      ld: 312334
+    buffered:
+      gd: 231313
+      ld: 312334
+    used:
+      gd: 231313
+      ld: 312334
+  Load:
+    shortterm:
+      gd: 231313
+      ld: 312334
+    midterm:
+      gd: 231313
+      ld: 312334
+  Network:
+    tx:
+      gd: 231313
+      ld: 312334
+    rx:
+      gd: 231313
+      ld: 312334
+
+# Not yet Implemented
+#Validation:
+#  DataSource: /path/to/data # if datasource is not defined use default from data connector, last column is ground truth named "Target"
+#  Treashold: 0.2 #  improvement percent
+#  Models:
+#    - m1
+#    - m2
+
+Misc:
+  heap: 512m
+  checkpoint: True
+  delay: 15s
+  interval: 30m
+  resetindex: False
+  point: False

@@ -733,13 +733,22 @@ class SciClassification:
                     sys.exit(1)
                 logger.info('[{}] : [INFO] Running Prediction on training data ...'.format(
                             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
-                predict = clf.predict(d_train)
-                logger.info('[{}] : [INFO] Calculating predict probabilities ...'.format(
-                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
-                predict_proba = clf.predict_proba(d_train)
-                score = clf.score(d_train, f_train)
-                logger.info('[{}] : [INFO] Score on training set is {}'.format(
-                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), score))
+                if user_m:
+                    predict = classification_method.predict(d_train)
+                    logger.info('[{}] : [INFO] Calculating predict probabilities ...'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+                    predict_proba = classification_method.predict_proba(d_train)
+                    score = classification_method.score(d_train, f_train)
+                    logger.info('[{}] : [INFO] Score on training set is {}'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), score))
+                else:
+                    predict = clf.predict(d_train)
+                    logger.info('[{}] : [INFO] Calculating predict probabilities ...'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+                    predict_proba = clf.predict_proba(d_train)
+                    score = clf.score(d_train, f_train)
+                    logger.info('[{}] : [INFO] Score on training set is {}'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), score))
 
                 try:
                     feature_imp = list(zip(d_train, clf.feature_importances_))
@@ -753,17 +762,33 @@ class SciClassification:
                         datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), classification_type))
                 logger.info('[{}] : [INFO] Predicting on validation set ...'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), score))
-                pred_valid = clf.predict(d_test)
-                predict_val_proba = clf.predict_proba(d_test)
-                score_valid = clf.score(d_test, f_test)
-                logger.info('[{}] : [INFO] Score on validation set is {}'.format(
-                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), score_valid))
-                logger.info('[{}] : [INFO] Exporting Training data with predictions ...'.format(
-                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
-                self.__appendPredictions("{}_train".format(classification_type), self.export, d_train, predict, predict_proba)
-                logger.info('[{}] : [INFO] Exporting Validation data with predictions ...'.format(
-                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
-                self.__appendPredictions("{}_valid".format(classification_type), self.export, d_test, pred_valid, predict_val_proba)
+
+                if user_m:
+                    pred_valid = classification_method.predict(d_test)
+                    predict_val_proba = classification_method.predict_proba(d_test)
+                    score_valid = classification_method.score(d_test, f_test)
+                    logger.info('[{}] : [INFO] Score on validation set is {}'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), score_valid))
+                    logger.info('[{}] : [INFO] Exporting Training data with predictions ...'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+                    self.__appendPredictions("{}_train".format(classification_type), self.export, d_train, predict,
+                                             predict_proba)
+                    logger.info('[{}] : [INFO] Exporting Validation data with predictions ...'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+                    self.__appendPredictions("{}_valid".format(classification_type), self.export, d_test, pred_valid,
+                                             predict_val_proba)
+                else:
+                    pred_valid = clf.predict(d_test)
+                    predict_val_proba = clf.predict_proba(d_test)
+                    score_valid = clf.score(d_test, f_test)
+                    logger.info('[{}] : [INFO] Score on validation set is {}'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), score_valid))
+                    logger.info('[{}] : [INFO] Exporting Training data with predictions ...'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+                    self.__appendPredictions("{}_train".format(classification_type), self.export, d_train, predict, predict_proba)
+                    logger.info('[{}] : [INFO] Exporting Validation data with predictions ...'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+                    self.__appendPredictions("{}_valid".format(classification_type), self.export, d_test, pred_valid, predict_val_proba)
             else:
                 try:
                     with joblib.parallel_backend('dask'):
@@ -779,13 +804,22 @@ class SciClassification:
                     sys.exit(1)
                 logger.info('[{}] : [INFO] Running Prediction on training data ...'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
-                predict = clf.predict(X)
-                logger.info('[{}] : [INFO] Calculating predict probabilities ...'.format(
-                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
-                predict_proba = clf.predict_proba(X)
-                score = clf.score(X, y)
-                logger.info('[{}] : [INFO] Score on training set is {}'.format(
-                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), score))
+                if user_m:
+                    predict = classification_method.predict(X)
+                    logger.info('[{}] : [INFO] Calculating predict probabilities ...'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+                    predict_proba = classification_method.predict_proba(X)
+                    score = classification_method.score(X, y)
+                    logger.info('[{}] : [INFO] Score on training set is {}'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), score))
+                else:
+                    predict = clf.predict(X)
+                    logger.info('[{}] : [INFO] Calculating predict probabilities ...'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+                    predict_proba = clf.predict_proba(X)
+                    score = clf.score(X, y)
+                    logger.info('[{}] : [INFO] Score on training set is {}'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), score))
                 try:
                     feature_imp = list(zip(X, clf.feature_importances_))
                     logger.info('[{}] : [INFO] Exporting Feature Importance ...'.format(
