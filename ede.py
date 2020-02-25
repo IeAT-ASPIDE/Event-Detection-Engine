@@ -117,7 +117,9 @@ def main(argv,
     for opt, arg in opts:
         if opt == '-h':
             print("#" * 100)
+            print("H2020 ASPIDE")
             print('Event Detection Engine')
+            print("-" * 100)
             print('Utilisation:')
             print('-f -> condifuration file location')
             print('-t -> activate training mode')

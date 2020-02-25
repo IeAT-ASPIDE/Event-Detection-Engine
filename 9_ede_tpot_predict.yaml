@@ -22,87 +22,36 @@ Mode:
   Detect: True
 
 
-
-Augmentation:
-  Scaler: # if not used set to false
-    StandardScaler:   # All scalers from scikitlearn
-      copy: True
-      with_mean: True
-      with_std: true
-
-
-# For HPO methods
+# TPOT Optimizer
 Training:
-  Type: hpo
-  HPOMethod: Random  # random, grid, bayesian, tpot
-  HPOParam:
-    n_iter: 2
+  Type: tpot
+  TPOTParam:
+    generations: 2
+    population_size: 2
+    offspring_size: 2
+    mutation_rate: 0.9
+    crossover_rate: 0.1
+    scoring: balanced_accuracy # Scoring different from HPO check TPOT documentation
+    max_time_mins: 1
+    max_eval_time_mins: 5
+    random_state: 42
     n_jobs: -1
-    refit: Balanced_Acc  # if multi metric used, refit should be metric name, mandatory
-    verbose: True
-  Method: randomforest
-  ParamDistribution:
-    n_estimators:
-      - 10
-      - 100
-    max_depth:
-      - 2
-      - 3
+    verbosity: 2
+    config_dict: TPOT light # "TPOT light", "TPOT MDR", "TPOT sparse" or None
+    use_dask: True
   Target: target
-  Export: hpo_1
-#  CV: 8
+  Export: tpotopt
   CV:
     Type: StratifiedKFold  # user defined all from sklearn
     Params:
       n_splits: 5
       shuffle: True
       random_state: 5
-  Scorers:
-    Scorer_list:
-      - Scorer:
-          Scorer_name: AUC
-          skScorer: roc_auc
-      - Scorer:
-          Scorer_name: Jaccard_Index
-          skScorer: jaccard
-      - Scorer:
-          Scorer_name: Balanced_Acc
-          skScorer: balanced_accuracy
-    User_scorer1: f1_score # key is user defined, can be changed same as Scorer_name
-
-
-# TPOT Optimizer
-#Training:
-#  Type: tpot
-#  TPOTParam:
-#    generations: 2
-#    population_size: 2
-#    offspring_size: 2
-#    mutation_rate: 0.9
-#    crossover_rate: 0.1
-#    scoring: balanced_accuracy # Scoring different from HPO check TPOT documentation
-#    max_time_mins: 1
-#    max_eval_time_mins: 5
-#    random_state: 42
-#    n_jobs: -1
-#    verbosity: 2
-#    config_dict: TPOT light # "TPOT light", "TPOT MDR", "TPOT sparse" or None
-#    use_dask: True
-#  Target: target
-#  Export: tpotopt
-#  #  CV: 8
-#  CV:
-#    Type: StratifiedKFold  # user defined all from sklearn
-#    Params:
-#      n_splits: 5
-#      shuffle: True
-#      random_state: 5
 
 Detect:
-  Method: RandomForest
+  Method: Tpot
   Type: classification
-  Load: hpo_1
-  Scaler: StandardScaler # Same as for training
+  Load: tpotopt
 
 Point:
   Memory:
