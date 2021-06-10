@@ -1,5 +1,5 @@
 """
-Copyright 2019, Institute e-Austria, Timisoara, Romania
+Copyright 2021, Institute e-Austria, Timisoara, Romania
     http://www.ieat.ro/
 Developers:
  * Gabriel Iuhasz, iuhasz.gabriel@info.uvt.ro
@@ -103,7 +103,6 @@ def main(argv,
     settings.categorical = None
     settings.point = False
 
-
     # Only for testing
     settings['validate'] = False
     dask_backend = False
@@ -121,13 +120,13 @@ def main(argv,
             print('Event Detection Engine')
             print("-" * 100)
             print('Utilisation:')
-            print('-f -> condifuration file location')
+            print('-f -> configuration file location')
             print('-t -> activate training mode')
             print('-m -> methods')
             print('   -> allowed methods: skm, em, dbscan, sdbscan, isoforest')
             print('-x -> export model name')
             print('-v -> validation')
-            print('-q -> query string for anomaly detection')
+            print('-q -> query string for anomaly/event detection')
             print("#" * 100)
             sys.exit(0)
         elif opt in ("-e", "--endpoint"):

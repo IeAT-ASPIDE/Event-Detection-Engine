@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='Event-Detection-Engine',
-    version='0.2',
+    version='0.5',
     packages=['exp', 'data', 'misc', 'test', 'models', 'edeuser', 'edeweka', 'queries', 'service', 'edengine',
               'edepoint', 'edescikit', 'edefeature', 'edeformater', 'experiments', 'ederulengine',
               'ederulengine.ruledefs', 'edetensorflow'],
