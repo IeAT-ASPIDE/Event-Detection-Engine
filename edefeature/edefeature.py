@@ -1,5 +1,5 @@
 """
-Copyright 2019, Institute e-Austria, Timisoara, Romania
+Copyright 2020, Institute e-Austria, Timisoara, Romania
     http://www.ieat.ro/
 Developers:
  * Gabriel Iuhasz, iuhasz.gabriel@info.uvt.ro
@@ -27,7 +27,7 @@ import sys
 class EdeFeatureSelector:
 
     def __init__(self):
-        self.author = 'Constructor for dmon-adp  feature selection methods'
+        self.author = 'Constructor for EDE  feature selection methods'
 
     def varianceSelection(self, df, threashold=.8):
         if not isinstance(df, pandas.core.frame.DataFrame):

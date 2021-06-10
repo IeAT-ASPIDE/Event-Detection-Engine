@@ -18,10 +18,10 @@ limitations under the License.
 from sklearn.linear_model import SGDClassifier
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.ensemble import RandomForestClassifier
-from dask_ml.datasets import make_classification
+# from dask_ml.datasets import make_classification
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-# from dask_ml.model_selection import IncrementalSearchCV, GridSearchCV, RandomizedSearchCV, HyperbandSearchCV
+from dask_ml.model_selection import IncrementalSearchCV, GridSearchCV, RandomizedSearchCV, HyperbandSearchCV
 from dask.distributed import Client, LocalCluster, progress
 import warnings
 from dask.utils import format_bytes
