@@ -1,0 +1,118 @@
+Connector:
+  PREndpoint: hal720m.sage.ieat.ro
+  Dask:
+    SchedulerEndpoint: local # if not local add DASK schedueler endpoint
+    Scale: 3 # Number of workers if local othervise ignored
+    SchedulerPort: 8787 # This is the default point
+    EnforceCheck: False # Irrelevant for local
+  MPort: 9200 # Moitoring port
+  KafkaEndpoint: 10.9.8.136
+  KafkaPort: 9092
+  KafkaTopic: edetopic
+  Query: {"query": '{__name__=~"node.+"}[1m]'}
+  MetricsInterval: "1m" # Metrics datapoint interval definition
+  QSize: 0
+  Index: time
+  QDelay: "10s" # Polling period for metrics fetching
+  Local: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/data/demo_data.csv # Define the path to the local file for training
+
+Mode:
+  Training: True
+  Validate: False
+  Detect: False
+
+
+
+Augmentation:
+  Scaler: # if not used set to false
+    StandardScaler:   # All scalers from scikitlearn
+      copy: True
+      with_mean: True
+      with_std: true
+
+
+# For HPO methods
+Training:
+  Type: hpo
+  HPOMethod: Random  # random, grid, bayesian, tpot
+  HPOParam:
+    n_iter: 2
+    n_jobs: -1
+    refit: Balanced_Acc  # if multi metric used, refit should be metric name, mandatory
+    verbose: True
+  Method: randomforest
+  ParamDistribution:
+    n_estimators:
+      - 10
+      - 100
+    max_depth:
+      - 2
+      - 3
+  Target: target
+  Export: hpo_1
+  CV:
+    Type: StratifiedKFold  # user defined all from sklearn
+    Params:
+      n_splits: 5
+      shuffle: True
+      random_state: 5
+  Scorers:
+    Scorer_list:
+      - Scorer:
+          Scorer_name: AUC
+          skScorer: roc_auc
+      - Scorer:
+          Scorer_name: Jaccard_Index
+          skScorer: jaccard
+      - Scorer:
+          Scorer_name: Balanced_Acc
+          skScorer: balanced_accuracy
+    User_scorer1: f1_score # key is user defined, can be changed same as Scorer_name
+
+Detect:
+  Method: RandomForest
+  Type: classification
+  Load: hpo_1
+  Scaler: StandardScaler # Same as for training
+
+Point:
+  Memory:
+    cached:
+      gd: 231313
+      ld: 312334
+    buffered:
+      gd: 231313
+      ld: 312334
+    used:
+      gd: 231313
+      ld: 312334
+  Load:
+    shortterm:
+      gd: 231313
+      ld: 312334
+    midterm:
+      gd: 231313
+      ld: 312334
+  Network:
+    tx:
+      gd: 231313
+      ld: 312334
+    rx:
+      gd: 231313
+      ld: 312334
+
+# Not yet Implemented
+#Validation:
+#  DataSource: /path/to/data # if datasource is not defined use default from data connector, last column is ground truth named "Target"
+#  Treashold: 0.2 #  improvement percent
+#  Models:
+#    - m1
+#    - m2
+
+Misc:
+  heap: 512m
+  checkpoint: True
+  delay: 15s
+  interval: 30m
+  resetindex: False
+  point: False
