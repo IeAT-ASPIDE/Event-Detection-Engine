@@ -1,0 +1,486 @@
+# For a quick start check out our HTTP Requests collection (Tools|HTTP Client|Open HTTP Requests Collection).
+#
+# Following HTTP Request Live Templates are available:
+# * 'gtrp' and 'gtr' create a GET request with or without query parameters;
+# * 'ptr' and 'ptrp' create a POST request with a simple or parameter-like body;
+# * 'mptr' and 'fptr' create a POST request to submit a form with a text or file field (multipart/form-data);
+
+############################### Get node details ###############################
+GET http://194.102.62.183:5000/node
+
+
+###
+GET http://194.102.62.253:5000/node
+
+
+###
+GET http://194.102.62.174:5000/node
+
+
+###
+GET http://194.102.62.162:5000/node
+
+
+
+############################### Get Raw session data, if non set fetch default one ###############################
+GET http://194.102.62.183:5000/chaos/session
+
+
+###
+GET http://194.102.62.253:5000/chaos/session
+
+
+###
+GET http://194.102.62.174:5000/chaos/session
+
+
+###
+GET http://194.102.62.162:5000/chaos/session
+
+
+
+############################### Put user defined session data ###############################
+PUT http://194.102.62.183:5000/chaos/session
+Content-Type: application/json
+Cache-Control: no-cache
+
+{
+  "anomalies": [
+    {
+      "type": "dummy",
+      "options": {
+        "stime": 10
+      },
+      "prob": 0.4
+    },
+    {
+      "type": "cpu_overload",
+      "options": {
+        "half": 1,
+        "time_out": 15
+      },
+      "prob": 0.1
+    },
+    {
+      "type": "memeater_v2",
+      "options": {
+        "unit": "gb",
+        "multiplier": 1,
+        "iteration": 2,
+        "time_out": 20
+      },
+      "prob": 0.2
+    },
+    {
+      "type": "copy",
+      "options": {
+         "unit": "gb",
+        "multiplier": 1,
+        "remove": 1,
+        "time_out": 20
+      },
+      "prob": 0.2
+    },
+    {
+      "type": "ddot",
+      "options": {
+        "iterations": 6,
+        "time_out": 1,
+        "modifiers": [1.2]
+      },
+      "prob": 0.1
+    }
+  ],
+  "options":
+  {
+    "loop": 1,
+    "stagger_time": 0,
+    "randomise": 1,
+    "sample_size": 10,
+    "distribution": "uniform",
+    "workers": 1
+  }
+}
+
+
+###
+PUT http://194.102.62.253:5000/chaos/session
+Content-Type: application/json
+Cache-Control: no-cache
+
+{
+  "anomalies": [
+    {
+      "type": "dummy",
+      "options": {
+        "stime": 10
+      },
+      "prob": 0.4
+    },
+    {
+      "type": "cpu_overload",
+      "options": {
+        "half": 1,
+        "time_out": 15
+      },
+      "prob": 0.1
+    },
+    {
+      "type": "memeater_v2",
+      "options": {
+        "unit": "gb",
+        "multiplier": 1,
+        "iteration": 2,
+        "time_out": 20
+      },
+      "prob": 0.2
+    },
+    {
+      "type": "copy",
+      "options": {
+         "unit": "gb",
+        "multiplier": 1,
+        "remove": 1,
+        "time_out": 20
+      },
+      "prob": 0.2
+    },
+    {
+      "type": "ddot",
+      "options": {
+        "iterations": 6,
+        "time_out": 1,
+        "modifiers": [1.2]
+      },
+      "prob": 0.1
+    }
+  ],
+  "options":
+  {
+    "loop": 1,
+    "stagger_time": 0,
+    "randomise": 1,
+    "sample_size": 10,
+    "distribution": "uniform",
+    "workers": 1
+  }
+}
+
+
+###
+PUT http://194.102.62.174:5000/chaos/session
+Content-Type: application/json
+Cache-Control: no-cache
+
+{
+  "anomalies": [
+    {
+      "type": "dummy",
+      "options": {
+        "stime": 10
+      },
+      "prob": 0.4
+    },
+    {
+      "type": "cpu_overload",
+      "options": {
+        "half": 1,
+        "time_out": 15
+      },
+      "prob": 0.1
+    },
+    {
+      "type": "memeater_v2",
+      "options": {
+        "unit": "gb",
+        "multiplier": 1,
+        "iteration": 2,
+        "time_out": 20
+      },
+      "prob": 0.2
+    },
+    {
+      "type": "copy",
+      "options": {
+         "unit": "gb",
+        "multiplier": 1,
+        "remove": 1,
+        "time_out": 20
+      },
+      "prob": 0.2
+    },
+    {
+      "type": "ddot",
+      "options": {
+        "iterations": 6,
+        "time_out": 1,
+        "modifiers": [1.2]
+      },
+      "prob": 0.1
+    }
+  ],
+  "options":
+  {
+    "loop": 1,
+    "stagger_time": 0,
+    "randomise": 1,
+    "sample_size": 10,
+    "distribution": "uniform",
+    "workers": 1
+  }
+}
+
+
+###
+PUT http://194.102.62.162:5000/chaos/session
+Content-Type: application/json
+Cache-Control: no-cache
+
+{
+  "anomalies": [
+    {
+      "type": "dummy",
+      "options": {
+        "stime": 10
+      },
+      "prob": 0.4
+    },
+    {
+      "type": "cpu_overload",
+      "options": {
+        "half": 1,
+        "time_out": 15
+      },
+      "prob": 0.1
+    },
+    {
+      "type": "memeater_v2",
+      "options": {
+        "unit": "gb",
+        "multiplier": 1,
+        "iteration": 2,
+        "time_out": 20
+      },
+      "prob": 0.2
+    },
+    {
+      "type": "copy",
+      "options": {
+         "unit": "mb",
+        "multiplier": 100,
+        "remove": 1,
+        "time_out": 20
+      },
+      "prob": 0.2
+    },
+    {
+      "type": "ddot",
+      "options": {
+        "iterations": 6,
+        "time_out": 1,
+        "modifiers": [1.2]
+      },
+      "prob": 0.1
+    }
+  ],
+  "options":
+  {
+    "loop": 1,
+    "stagger_time": 0,
+    "randomise": 1,
+    "sample_size": 10,
+    "distribution": "uniform",
+    "workers": 1
+  }
+}
+
+
+
+
+
+############################### Generate final session ###############################
+PUT http://194.102.62.183:5000/chaos/session/execute
+
+###
+PUT http://194.102.62.253:5000/chaos/session/execute
+
+###
+PUT http://194.102.62.174:5000/chaos/session/execute
+
+###
+PUT http://194.102.62.162:5000/chaos/session/execute
+
+############################### Get anomalies to be executed in a session ###############################
+GET http://194.102.62.183:5000/chaos/session/execute
+
+###
+GET http://194.102.62.253:5000/chaos/session/execute
+
+###
+GET http://194.102.62.174:5000/chaos/session/execute
+
+###
+GET http://194.102.62.162:5000/chaos/session/execute
+
+
+
+############################### Execute final session, if not available (above PUT not executed) generate it on the fly ###############################
+POST http://194.102.62.183:5000/chaos/session/execute
+x-access-tokens: 50450bd2-ba1b-4767-bc1e-7f46b7c805f0
+
+###
+POST http://194.102.62.253:5000/chaos/session/execute
+x-access-tokens: 50450bd2-ba1b-4767-bc1e-7f46b7c805f0
+
+###
+POST http://194.102.62.174:5000/chaos/session/execute
+x-access-tokens: 50450bd2-ba1b-4767-bc1e-7f46b7c805f0
+
+###
+POST http://194.102.62.162:5000/chaos/session/execute
+x-access-tokens: 50450bd2-ba1b-4767-bc1e-7f46b7c805f0
+
+
+############################### Get current jobs based on status (failed, finished, queued, started directly from rq ###############################
+GET http://194.102.62.183:5000/chaos/session/execute/jobs
+
+###
+GET http://194.102.62.253:5000/chaos/session/execute/jobs
+
+###
+GET http://194.102.62.174:5000/chaos/session/execute/jobs
+
+###
+GET http://194.102.62.162:5000/chaos/session/execute/jobs
+
+
+
+############################### Get detailed job execution details ###############################
+GET http://194.102.62.183:5000/chaos/session/execute/jobs/all
+
+###
+GET http://194.102.62.253:5000/chaos/session/execute/jobs/all
+
+###
+GET http://194.102.62.174:5000/chaos/session/execute/jobs/all
+
+###
+GET http://194.102.62.162:5000/chaos/session/execute/jobs/all
+
+
+### Deletes all job from all registries
+DELETE http://127.0.0.1:5000/chaos/session/execute/jobs
+
+
+
+############################### Get detailed info on specific job based in job_id ###############################
+GET http://hal720m.sage.ieat.ro:5001/chaos/session/execute/jobs/7a75c47e-ba24-47c5-8bd1-2ba6632b7182
+
+
+
+############################### Deletes specific job based on job_id ###############################
+DELETE http://hal720m.sage.ieat.ro:5001/chaos/session/execute/jobs/3cfff92e-ef5d-40a6-905d-d99683874fca
+
+
+
+############################### Get list of available logs ###############################
+
+GET http://194.102.62.183:5000/chaos/session/execute/jobs/logs
+
+###
+GET http://194.102.62.253:5000/chaos/session/execute/jobs/logs
+
+###
+GET http://194.102.62.174:5000/chaos/session/execute/jobs/logs
+
+###
+GET http://194.102.62.162:5000/chaos/session/execute/jobs/logs
+
+
+############################### Get arhive available logs ###############################
+
+
+POST http://194.102.62.183:5000/chaos/session/execute/jobs/logs
+
+###
+POST http://194.102.62.253:5000/chaos/session/execute/jobs/logs
+
+###
+POST http://194.102.62.174:5000/chaos/session/execute/jobs/logs
+
+###
+POST http://194.102.62.162:5000/chaos/session/execute/jobs/logs
+
+############################### Delete logs ###############################
+
+DELETE http://194.102.62.183:5000/chaos/session/execute/jobs/logs
+
+###
+DELETE http://194.102.62.253:5000/chaos/session/execute/jobs/logs
+
+###
+DELETE http://194.102.62.174:5000/chaos/session/execute/jobs/logs
+
+###
+DELETE http://194.102.62.162:5000/chaos/session/execute/jobs/logs
+
+### Get specific log from list
+GET http://hal720m.sage.ieat.ro:5001/chaos/session/execute/jobs/logs/dummy-out.log
+
+############################### Get available workers ###############################
+
+GET http://194.102.62.183:5000/workers
+
+###
+GET http://194.102.62.253:5000/workers
+
+###
+GET http://194.102.62.174:5000/workers
+
+###
+GET http://194.102.62.162:5000/workers
+
+
+############################### Start workers as service for all nodes ###############################
+POST http://194.102.62.183:5000/workers
+x-access-tokens: 50450bd2-ba1b-4767-bc1e-7f46b7c805f0
+
+###
+POST http://194.102.62.253:5000/workers
+x-access-tokens: 50450bd2-ba1b-4767-bc1e-7f46b7c805f0
+
+###
+POST http://194.102.62.174:5000/workers
+x-access-tokens: 50450bd2-ba1b-4767-bc1e-7f46b7c805f0
+
+###
+POST http://194.102.62.162:5000/workers
+x-access-tokens: 50450bd2-ba1b-4767-bc1e-7f46b7c805f0
+
+
+############################### Stops workers, if no json payload defined stoppes all else id of worker to be stopped must be specified ###############################
+DELETE http://194.102.62.183:5000/workers
+x-access-tokens: 50450bd2-ba1b-4767-bc1e-7f46b7c805f0
+
+###
+DELETE http://194.102.62.253:5000/workers
+x-access-tokens: 50450bd2-ba1b-4767-bc1e-7f46b7c805f0
+
+###
+DELETE http://194.102.62.174:5000/workers
+x-access-tokens: 50450bd2-ba1b-4767-bc1e-7f46b7c805f0
+
+###
+DELETE http://194.102.62.162:5000/workers
+x-access-tokens: 50450bd2-ba1b-4767-bc1e-7f46b7c805f0
+
+
+###
+#Content-Type: application/json
+#
+#{
+#"id": 3
+#}
+
+
+

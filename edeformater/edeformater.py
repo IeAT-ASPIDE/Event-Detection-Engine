@@ -1,5 +1,5 @@
 """
-Copyright 2019, Institute e-Austria, Timisoara, Romania
+Copyright 2020, Institute e-Austria, Timisoara, Romania
     http://www.ieat.ro/
 Developers:
  * Gabriel Iuhasz, iuhasz.gabriel@info.uvt.ro
