@@ -150,6 +150,27 @@ def str2Bool(st):
 def cfilterparse(filter):
     if isinstance(filter, list):
         return filter
+    if isinstance(filter, dict):
+        try:
+            drop_file_loc = filter['Dlist']
+        except Exception as inst:
+            logger.error('[{}] : [ERROR] Invalid key found in Filter DColumns: {}'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), inst.args))
+            sys.exit(0)
+        if checkFile(drop_file_loc):
+            with open(drop_file_loc, 'r') as stream:
+                try:
+                    filter_list = yaml.safe_load(stream)
+                except yaml.YAMLError as exc:
+                    logger.error('[{}] : [ERROR] YAML DColumns file parse error'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+                    sys.exit(1)
+                # print(filter_list)
+                return filter_list
+        else:
+            logger.error('[{}] : [ERROR] File not found for DColumns at: {}'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), drop_file_loc))
+            sys.exit(1)
     return filter.split(';')
 
 

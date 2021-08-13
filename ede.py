@@ -108,7 +108,7 @@ def main(argv,
     dask_backend = False
 
     try:
-        opts, args = getopt.getopt(argv, "he:tf:m:vx:d:lq:", ["endpoint=", "file=", "method=", "export=", "detect=", "query="])  # todo:expand comand line options
+        opts, args = getopt.getopt(argv, "he:tf:m:vx:d:lq:", ["endpoint=", "file=", "method=", "export=", "detect=", "query="])  # todo:expand command line options
     except getopt.GetoptError:
         logger.warning('[%s] : [WARN] Invalid argument received exiting', datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
         print("ede.py -f <filelocation>, -t -m <method> -v -x <modelname>")
