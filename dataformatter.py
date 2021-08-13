@@ -150,6 +150,30 @@ class DataFormatter:
                 sys.exit(1)
         return df[lColumns]
 
+    def filterWildcard(self, df, wild_card, keep=False):
+        """
+        :param df: dataframe to filer
+        :param wild_card: str wildcard of columns to be filtered
+        :param keep: if keep True, only cols with wildcard are kept, if False they will be deleted
+        :return: filtered dataframe
+        """
+        filtr_list = []
+        mask = df.columns.str.contains(wild_card)
+        filtr_list.extend(list(df.loc[:, mask].columns.values))
+
+        logger.info('[%s] : [INFO] Columns to be filtered based on wildcard: %s',
+                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), filtr_list)
+        if keep:
+            df_wild = df[filtr_list]
+        else:
+            df_wild = df.drop(filtr_list, axis=1)
+
+        logger.info('[%s] : [INFO] Filtered shape:  %s',
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), df_wild.shape)
+        # print("Columns of filtered data:")
+        # print(df_concat_filtered.columns)
+        return df_wild
+
     def filterRows(self, df, ld, gd=0):
         '''
         :param df: -> dataframe

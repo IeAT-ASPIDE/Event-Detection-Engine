@@ -113,6 +113,7 @@ class EDEngine:
         self.dfilter = settingsDict['dfilter']
         self.fillnan = settingsDict['fillna']
         self.dropnan = settingsDict['dropna']
+        self.filterwild = settingsDict['filterwild']
         self.checkpoint = settingsDict['checkpoint']
         self.interval = settingsDict['interval']
         self.delay = settingsDict['delay']
@@ -662,11 +663,21 @@ class EDEngine:
         if self.dropnan:
             self.dformat.dropMissing(df)
 
-        # if index:
-        #     df.set_index(index, inplace=True)
-
         if df_index is not None:
             df.set_index(df_index, inplace=True)
+
+        if self.filterwild:
+            if "Regex" not in self.filterwild.keys():
+                logger.error('[%s] : [ERROR] Missing parameters for filtering via wildcard exiting ...',
+                               datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
+                sys.exit(1)
+            if "Keep" in self.filterwild.keys():
+                df = self.dformat.filterWildcard(df, wild_card=self.filterwild['Regex'], keep=self.filterwild['Keep'])
+            else:
+                df = self.dformat.filterWildcard(df, wild_card=self.filterwild['Regex'])
+
+        # if index:
+        #     df.set_index(index, inplace=True)
 
         if self.categorical is None:
             logger.info('[%s] : [INFO] Skipping categorical feature conversion',
@@ -686,7 +697,7 @@ class EDEngine:
             df.to_csv(os.path.join(self.dataDir, pr_f))
         logger.info('[{}] : [INFO] Filtered data shape {}'.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), df.shape))
-        if df.shape[0] is 0:
+        if df.shape[0] == 0:
             logger.error('[{}] : [ERROR] Empty dataframe rezulted after filtering! Exiting!'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
             sys.exit(1)

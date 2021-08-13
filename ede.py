@@ -61,6 +61,7 @@ def main(argv,
     settings.qinterval = None
     settings.fillna = None
     settings.dropna = None
+    settings.filterwild = None
     settings.local = None
     settings.train = None
     settings.hpomethod = None
@@ -705,6 +706,18 @@ def main(argv,
         logger.info('[{}] : [INFO] Drop None not set, skipping ...'.format(
             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
         settings['dropna'] = False
+
+    try:
+        if readCnf['Filter']['DWild']:
+            settings['filterwild'] = readCnf['Filter']['DWild']
+        else:
+            settings['filterwild'] = False
+        logger.info('[{}] : [INFO] Drop based on wildcard  set to {}'.format(
+            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), readCnf['Filter']['DWild']))
+    except:
+        logger.info('[{}] : [INFO] Drop based on wildcard not set, skipping ...'.format(
+            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+        settings['filterwild'] = False
 
     if settings["checkpoint"] is None:
         try:
