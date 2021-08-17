@@ -22,7 +22,11 @@ import numpy as np
 import seaborn as sns
 import os
 import matplotlib.pyplot as plt
-from yellowbrick.features import rank2d
+from yellowbrick.features import rank2d, Rank2D
+from yellowbrick.features import PCA
+from sklearn import preprocessing
+
+
 
 
 def user_iso(n_estimators,
@@ -137,25 +141,41 @@ def wrapper_analysis_plot(name,
     return line_plot
 
 
-def wrapper_rank2_pearson(name,
+def wrapper_rank2(name,
                           location,
                           dcol=[],
+                          algorithm='pearson',
+                          colormap = 'RdBu_r',
                           show=False):
-    def rank2_pearson(data,
+    """
+    Compute and generate heatmap for different feature ranking methods including:
+    'pearson’, ‘covariance’, ‘spearman’, or ‘kendalltau'
+    :param name: name to be used for visualization
+    :param location: location to save the heatmap
+    :param dcol: columns to be droped
+    :param algorithm: select the ranking algorithm to be used
+    :param colormap: colormap to be used for vizualization
+    :param show: if True feature names will be added
+    :return:
+    """
+    def rank2(data,
                       name=name,
                       location=location,
                       dcol=dcol,
+                      algorithm=algorithm,
+                      colormap=colormap,
                       show=show):
         df_data = data.drop(dcol, axis=1)
+        df_data = df_data.astype(float)
         ax = plt.axes()
-        try:
-            rank2d(df_data, ax=ax, show_feature_names=show)
-        except Exception as inst:
-            print(type(inst), inst.args)
+        rk2d2 = Rank2D(ax=ax, algorithm=algorithm, show_feature_names=show, size=(1080, 720), colormap=colormap)
         ax.set_title(name)
-        plt.savefig(os.path.join(location, f"{name}_Pearson_Corr.png"))
+        rk2d2.fit(df_data)
+        rk2d2.transform(df_data)
+        rk2d2.show(outpath=os.path.join(location, f"Correlation_{algorithm}_{name}.png"))
+        plt.close()
         return name
-    return rank2_pearson
+    return rank2
 
 
 def wrapper_improved_pearson(name,
@@ -167,7 +187,7 @@ def wrapper_improved_pearson(name,
     Computes the Pearson correlation between features. If the augmentation step is
     not used and categorical features are still present these will be converted from object dtypes
     to float
-    :param name: name to be used for visuzliation
+    :param name: name to be used for visualization
     :param location: location to save the heatmap
     :param dcol: columns to be droped
     :param cmap: color map
@@ -182,10 +202,9 @@ def wrapper_improved_pearson(name,
                          cmap=cmap,
                          show=show):
 
-        # Dectect object columns and convert them to float
-        s = data.select_dtypes(include='object').columns
-        data[s] = data[s].astype("float")
+        # Detect object columns and convert them to float
         df_data = data.drop(dcol, axis=1)
+        df_data = df_data.astype(float)
         # Compute pearson corelation
         p_test = df_data.corr()
         # Generate mask for upper half
@@ -202,9 +221,47 @@ def wrapper_improved_pearson(name,
         ax.set_title(f'Person correlation {name}', fontsize=20)
         hm_fig = "Pearson_{}.png".format(name)
         ht_hm.figure.savefig(os.path.join(location, hm_fig))
+        plt.close()
         return name
     return improved_pearsons
 
+
+def wrapper_pca_plot(name,
+                     location,
+                     target='target',
+                     projection=2):
+    """
+    Creates a PCA plot based on the available target data using a
+    2 or 3D projection.
+    :param name: name to be used for visualization
+    :param location: location to save the figure
+    :param target: target (ground truth) column name, if mising this plot will be skipped
+    :param projection: 2 or 3 Dimenisonal projection
+    :return:
+    """
+    def pca_plot(data,
+                 location=location,
+                 name=name,
+                 projection=projection,
+                 target=target):
+        classes = data[target].unique()
+        data[target].replace(0, "0", inplace=True)
+        le = preprocessing.LabelEncoder()
+        le.fit(data[target])
+        y = le.transform(data[target])
+        data_test = data.drop([target], axis=1)
+        visualizer = PCA(
+            scale=True,
+            projection=projection,
+            classes=classes,
+            title=f"Principle component Plot {name}",
+
+        )
+        visualizer.fit_transform(data_test, y)
+        plot_name = f"PrincipalComponent_Projection_{projection}_{name}.png"
+        visualizer.show(outpath=os.path.join(location, plot_name))
+        return 0
+    return pca_plot
 
 
 
