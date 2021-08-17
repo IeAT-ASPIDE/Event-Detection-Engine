@@ -22,7 +22,7 @@ import numpy as np
 import seaborn as sns
 import os
 import matplotlib.pyplot as plt
-from yellowbrick.features import rank2d, Rank2D
+from yellowbrick.features import rank2d, Rank2D, Rank1D
 from yellowbrick.features import PCA
 from sklearn import preprocessing
 
@@ -141,6 +141,47 @@ def wrapper_analysis_plot(name,
     return line_plot
 
 
+def wrapper_rank1(name,
+                  location,
+                  dcol=[],
+                  algorithm='shapiro',
+                  ):
+    """
+    Compute and generate heatmap for different feature ranking 1D methods including:
+    shapiro
+    :param name: name to be used for visualization
+    :param location: location to save the heatmap
+    :param dcol: columns to be droped
+    :param algorithm: select the ranking algorithm to be used
+    :return:
+    """
+    def rank1(data,
+              name=name,
+              location=location,
+              dcol=dcol,
+              algorithm=algorithm):
+        df_data = data.drop(dcol, axis=1)
+        df_data = df_data.astype(float)
+        ax = plt.axes()
+        visualizer = Rank1D(algorithm=algorithm, size=(1200, 1200), ax=ax)
+        visualizer.fit(df_data)  # Fit the data to the visualizer
+        visualizer.transform(df_data)
+        visualizer.show(outpath=os.path.join(location, f"Rank1D_{algorithm}_{name}_unsorted.png"))
+        plt.close()
+        # Add to dataframe for custom visualization
+        df_rank1d = pd.DataFrame()
+        df_rank1d['features'] = visualizer.features_
+        df_rank1d['rank'] = visualizer.ranks_
+        # df_anomaly_rank1d.set_index('rank', inplace=True)
+        df_rank1d.sort_values(by=['rank'], inplace=True, ascending=False)  # Sort by rank decesnding
+        df_rank1d.plot(kind='bar', x="features", rot=1, title=f"{algorithm} rank", sort_columns=True, figsize=(30,45))
+        df_rank1d.to_csv(os.path.join(location, f"Rank1D_{algorithm}_{name}.csv"), index=False)
+        plt.xticks(rotation=90)
+        plt.savefig(os.path.join(location, f"Rank1D_{algorithm}_{name}.png"))#
+        plt.close()
+        return name
+    return rank1
+
 def wrapper_rank2(name,
                           location,
                           dcol=[],
@@ -186,7 +227,7 @@ def wrapper_improved_pearson(name,
     """
     Computes the Pearson correlation between features. If the augmentation step is
     not used and categorical features are still present these will be converted from object dtypes
-    to float
+    to float.
     :param name: name to be used for visualization
     :param location: location to save the heatmap
     :param dcol: columns to be droped
