@@ -18,9 +18,11 @@ limitations under the License.
 
 from sklearn.ensemble import IsolationForest
 import pandas as pd
+import numpy as np
 import seaborn as sns
 import os
 import matplotlib.pyplot as plt
+from yellowbrick.features import rank2d
 
 
 def user_iso(n_estimators,
@@ -133,4 +135,77 @@ def wrapper_analysis_plot(name,
         plt.close()
         return name
     return line_plot
+
+
+def wrapper_rank2_pearson(name,
+                          location,
+                          dcol=[],
+                          show=False):
+    def rank2_pearson(data,
+                      name=name,
+                      location=location,
+                      dcol=dcol,
+                      show=show):
+        df_data = data.drop(dcol, axis=1)
+        ax = plt.axes()
+        try:
+            rank2d(df_data, ax=ax, show_feature_names=show)
+        except Exception as inst:
+            print(type(inst), inst.args)
+        ax.set_title(name)
+        plt.savefig(os.path.join(location, f"{name}_Pearson_Corr.png"))
+        return name
+    return rank2_pearson
+
+
+def wrapper_improved_pearson(name,
+                             location,
+                             dcol=[],
+                             cmap='coolwarm',
+                             show=False):
+    """
+    Computes the Pearson correlation between features. If the augmentation step is
+    not used and categorical features are still present these will be converted from object dtypes
+    to float
+    :param name: name to be used for visuzliation
+    :param location: location to save the heatmap
+    :param dcol: columns to be droped
+    :param cmap: color map
+    :param show: show feature names
+    :return: name
+    """
+
+    def improved_pearsons(data,
+                         name=name,
+                         location=location,
+                         dcol=dcol,
+                         cmap=cmap,
+                         show=show):
+
+        # Dectect object columns and convert them to float
+        s = data.select_dtypes(include='object').columns
+        data[s] = data[s].astype("float")
+        print(data.dtypes)
+        df_data = data.drop(dcol, axis=1)
+        # Compute pearson corelation
+        p_test = df_data.corr()
+        # Generate mask for upper half
+        mask = np.triu(np.ones_like(p_test, dtype=bool))
+
+        # Set up the matplotlib figure
+        f, ax = plt.subplots(figsize=(25, 15))
+
+        # Custom color map
+        # cmap = sns.diverging_palette(230, 20, as_cmap=True)
+        # ax = plt.axes()
+
+        ht_hm = sns.heatmap(p_test, mask=mask, ax=ax, cmap=cmap, annot=show)
+        ax.set_title(f'Person correlation {name}', fontsize=20)
+        hm_fig = "Pearson_{}.png".format(name)
+        ht_hm.figure.savefig(os.path.join(location, hm_fig))
+        return name
+    return improved_pearsons
+
+
+
 
