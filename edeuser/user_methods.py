@@ -185,7 +185,6 @@ def wrapper_improved_pearson(name,
         # Dectect object columns and convert them to float
         s = data.select_dtypes(include='object').columns
         data[s] = data[s].astype("float")
-        print(data.dtypes)
         df_data = data.drop(dcol, axis=1)
         # Compute pearson corelation
         p_test = df_data.corr()
