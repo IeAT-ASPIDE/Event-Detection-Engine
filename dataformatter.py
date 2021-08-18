@@ -220,13 +220,27 @@ class DataFormatter:
                 sys.exit(1)
             return 0
 
+    def filterLowVariance(self, df):
+        logger.info('[{}] : [INFO] Checking low variance columns ...'.format(
+            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+        uniques = df.apply(lambda x: x.nunique())
+        rm_columns = []
+        for uindex, uvalue in uniques.iteritems():
+            if uvalue == 1:
+                rm_columns.append(uindex)
+        logger.info('[{}] : [INFO] Found {} low variance columns removing ...'.format(
+            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), len(rm_columns)))
+        logger.debug('[{}] : [INFO] Found {} low variance columns: {}'.format(
+            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), len(rm_columns), rm_columns))
+        df.drop(rm_columns, inplace=True, axis=1)
+
     def fillMissing(self, df):
-        logger.info('[{}] : [WARN] Filling in missing values with 0'.format(
+        logger.info('[{}] : [INFO] Filling in missing values with 0'.format(
             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
         df.fillna(0, inplace=True)
 
     def dropMissing(self, df):
-        logger.info('[{}] : [WARN] Dropping columns with in missing values'.format(
+        logger.info('[{}] : [INFO] Dropping columns with in missing values'.format(
             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
         df.dropna(axis=1, how='all', inplace=True)
 

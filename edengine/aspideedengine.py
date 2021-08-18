@@ -112,6 +112,7 @@ class EDEngine:
         self.rfilter = settingsDict['rfilter']
         self.dfilter = settingsDict['dfilter']
         self.fillnan = settingsDict['fillna']
+        self.filterlow = settingsDict['filterlow']
         self.dropnan = settingsDict['dropna']
         self.filterwild = settingsDict['filterwild']
         self.checkpoint = settingsDict['checkpoint']
@@ -658,6 +659,8 @@ class EDEngine:
                     self.dformat.dropColumns(df, cfilterparse(self.dfilter), cp=False)
                 else:
                     df = self.dformat.dropColumns(df, cfilterparse(self.dfilter))
+        if self.filterlow:
+            self.dformat.filterLowVariance(df)
         if self.fillnan:
             self.dformat.fillMissing(df)
         if self.dropnan:

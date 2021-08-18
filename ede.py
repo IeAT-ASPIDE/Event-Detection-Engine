@@ -62,6 +62,7 @@ def main(argv,
     settings.fillna = None
     settings.dropna = None
     settings.filterwild = None
+    settings.filterlow = None
     settings.local = None
     settings.train = None
     settings.hpomethod = None
@@ -706,6 +707,18 @@ def main(argv,
         logger.info('[{}] : [INFO] Drop None not set, skipping ...'.format(
             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
         settings['dropna'] = False
+
+    try:
+        if readCnf['Filter']['LowVariance']:
+            settings['filterlow'] = readCnf['Filter']['LowVariance']
+        else:
+            settings['filterlow'] = False
+        logger.info('[{}] : [INFO] Low Variance filter set to {}'.format(
+            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), readCnf['Filter']['LowVariance']))
+    except Exception:
+        logger.info('[{}] : [INFO] Low Variance filter not set, skipping ...'.format(
+            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+        settings['filterlow'] = False
 
     try:
         if readCnf['Filter']['DWild']:
