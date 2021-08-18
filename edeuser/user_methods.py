@@ -22,7 +22,7 @@ import numpy as np
 import seaborn as sns
 import os
 import matplotlib.pyplot as plt
-from yellowbrick.features import rank2d, Rank2D, Rank1D
+from yellowbrick.features import Rank2D, Rank1D, Manifold
 from yellowbrick.features import PCA
 from sklearn import preprocessing
 
@@ -291,18 +291,68 @@ def wrapper_pca_plot(name,
         le.fit(data[target])
         y = le.transform(data[target])
         data_test = data.drop([target], axis=1)
+        ax = plt.axes()
         visualizer = PCA(
             scale=True,
             projection=projection,
             classes=classes,
             title=f"Principle component Plot {name}",
-
         )
         visualizer.fit_transform(data_test, y)
         plot_name = f"PrincipalComponent_Projection_{projection}_{name}.png"
         visualizer.show(outpath=os.path.join(location, plot_name))
+        plt.close()
         return 0
     return pca_plot
 
 
+def wrapper_manifold(name,
+                     location,
+                     target='target',
+                     manifold='tsne',
+                     n_neighbors=10
+                     ):
+    """
+    The Manifold visualizer provides high dimensional visualization using manifold learning
+    to embed instances described by many dimensions into 2, thus allowing the creation of
+    a scatter plot that shows latent structures in data. Currently supported methods are those from
+    supported by scikit-learn:
+
+    "lle" Locally Linear Embedding (LLE) uses many local linear decompositions to preserve globally non-linear structures.
+    "ltsa" LTSA LLE: local tangent space alignment is similar to LLE in that it uses locality to preserve neighborhood distances.
+    "hessian" Hessian LLE an LLE regularization method that applies a hessian-based quadratic form at each neighborhood
+    "modified" Modified LLE applies a regularization parameter to LLE.
+    "isomap" Isomap seeks a lower dimensional embedding that maintains geometric distances between each instance.
+    "mds" MDS: multi-dimensional scaling uses similarity to plot points that are near to each other close in the embedding.
+    "spectral" Spectral Embedding a discrete approximation of the low dimensional manifold using a graph representation.
+    "tsne" t-SNE: converts the similarity of points into probabilities then uses those probabilities to create an embedding.
+
+    :param name: name to be used for visualization
+    :param location: location to save the figure
+    :param target: target (ground truth) column name, if missing this plot will be skipped unless default value is found
+    :param manifold: manifold empeding method to be used
+    :param n_neighbors: number of nearest neighbours, some methods might not use it
+    :return: 0
+    """
+    def manifold_embeding(data,
+                 name=name,
+                 location=location,
+                 target=target,
+                 manifold=manifold,
+                 n_neighbors=n_neighbors):
+
+        classes = data[target].unique()
+        data[target].replace(0, "0", inplace=True)
+        le = preprocessing.LabelEncoder()
+        le.fit(data[target])
+        y = le.transform(data[target])
+        data_test = data.drop([target], axis=1)
+        ax = plt.axes()
+        vizualisation = Manifold(classes=classes, manifold=manifold, n_neighbors=n_neighbors, ax=ax)
+        vizualisation.fit_transform(data_test, y)
+        plot_name = f"Manifold_{manifold}_{name}.png"
+        vizualisation.show(outpath=os.path.join(location, plot_name))
+        plt.close()
+        return 0
+    return manifold_embeding
 
