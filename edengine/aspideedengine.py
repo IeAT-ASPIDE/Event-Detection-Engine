@@ -843,15 +843,15 @@ class EDEngine:
     def __analysisMethod(self, method,
                           data):
         try:
-            logger.info('[{}] : [INFO] Loading user defined analysis'.format(
-                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+            logger.info('[{}] : [INFO] Loading user defined analysis: {}'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), method.__name__))
             data_op = method(data)
         except Exception as inst:
-            logger.error('[{}] : [ERROR] Failed to load user analysis with {} and {}'.format(
-                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(inst), inst.args))
+            logger.error('[{}] : [ERROR] Failed to load user analysis {} with {} and {}'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), method.__name__, type(inst), inst.args))
             return data
-        logger.info('[{}] : [INFO] Finished user analysis'.format(
-            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+        logger.info('[{}] : [INFO] Finished user analysis: {}'.format(
+            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), method.__name__))
         return data_op
 
     def trainMethod(self):
