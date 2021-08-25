@@ -360,6 +360,7 @@ class SciCluster:
         logger.debug('[{}] : [DEBUG] Predicted Anomaly Array {}'.format(
             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), predictions))
         fname = str(clf).split('(')[0]
+        self.__plot_feature_sep(data, predictions, method=fname, mname=mname)
         self.__decision_boundary(clf, data, method=fname, mname=mname)
         self.__serializemodel(clf, fname, mname)
         return clf
@@ -415,7 +416,7 @@ class SciCluster:
         """
         :param model: model to be refitted with 2 features (PCA)
         :param data: dataset after PCA
-        :param method: method used for ploting decision boundary
+        :param method: method used for plotting decision boundary
         :param mname: name of the model to be displayed
         :param anomaly_label: label for anomaly instances (differs from method to method)
         """
@@ -457,3 +458,41 @@ class SciCluster:
         plot_name = f"Decision_Boundary_{method}_{mname}.png"
         plt.savefig(os.path.join(self.modelDir, plot_name))
         plt.close();
+
+    def __plot_feature_sep(self,
+                           data,
+                           pred,
+                           method,
+                           mname,
+                           anomaly_label=-1,
+                           normal_label=1,
+                           limit=10):
+        """
+        :param data: dataset used for training or prediction
+        :param pred: model prediction
+        :param method: method used for plotting decision boundary
+        :param mname: name of the model to be displayed
+        :param anomaly_label: label for anomaly instances (differs from method to method)
+        :param normal_label: labal of normal data
+        :param limit: limits the number of features to be plotted # todo add limit to cfg file
+        :return:
+        """
+        col_names_plt = list(data.columns.values)
+        data['anomaly'] = pred
+        i = 0
+        for feature in col_names_plt:
+            if i > limit:
+                break
+            if feature == 'time' or feature == 'anomaly':
+                pass
+            else:
+                normal_event = data.loc[data['anomaly'] == normal_label, feature]
+                anomay_event = data.loc[data['anomaly'] == anomaly_label, feature]
+                plt.figure(figsize=(10, 6))
+                plt.hist(normal_event, bins=50, alpha=0.5, density=True, label='{} normal'.format(feature))
+                plt.hist(anomay_event, bins=50, alpha=0.5, density=True, label='{} anomaly'.format(feature))
+                plt.legend(loc='upper right')
+                plot_name = f"Feature_Separation_{method}_{mname}_{feature}.png"
+                plt.savefig(os.path.join(self.modelDir, plot_name))
+                plt.close();
+            i+=1
