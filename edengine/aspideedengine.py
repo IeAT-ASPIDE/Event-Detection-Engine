@@ -798,7 +798,7 @@ class EDEngine:
                                         X=pr_data,
                                         y=y,
                                         hpomethod=self.hpomethod,
-                                        hpoparam = self.hpoparam,
+                                        hpoparam=self.hpoparam,
                                         classification_method=self.trainmethod)
                 logger.info('[{}] : [INFO] HPO Completed.'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))

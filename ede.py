@@ -194,14 +194,23 @@ def main(argv,
                 readCnf['Connector']['ESEndpoint']))
             settings['esendpoint'] = readCnf['Connector']['ESEndpoint']
         except:
-            if readCnf['Connector']['PREndpoint'] is None:  # todo; now only available in config file not in commandline
-                logger.error('[%s] : [ERROR] ES and PR backend Enpoints not set in conf or commandline!',
-                                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
-                sys.exit(1)
-            else:
+
+            try:
                 settings['prendpoint'] = readCnf['Connector']['PREndpoint']
-                logger.info('[{}] : [INFO] Monitoring PR Endpoint set to {}'.format(datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'),
-                            settings["prendpoint"]))
+                logger.info('[{}] : [INFO] Monitoring PR Endpoint set to {}'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'),
+                    settings["prendpoint"]))
+            except Exception:
+                settings['prendpoint'] = None
+
+            # if readCnf['Connector']['PREndpoint'] is None:  # todo; now only available in config file not in commandline
+            #     logger.error('[%s] : [ERROR] ES and PR backend Enpoints not set in conf or commandline!',
+            #                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
+            #     sys.exit(1)
+            # else:
+            #     settings['prendpoint'] = readCnf['Connector']['PREndpoint']
+            #     logger.info('[{}] : [INFO] Monitoring PR Endpoint set to {}'.format(datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'),
+            #                 settings["prendpoint"]))
     else:
         logger.info('[%s] : [INFO] ES Backend Enpoint set to %s',
                             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings['esendpoint'])
@@ -211,15 +220,19 @@ def main(argv,
             logger.info('[%s] : [INFO] From timestamp set to %s',
                         datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'),
                         settings["from"])
-        except:
-            logger.info('[{}] : [INFO] PR Backend endpoint set to {}'.format(
-                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings['prendpoint']))
+        except Exception:
+            # logger.info('[{}] : [INFO] PR Backend endpoint set to {}'.format(
+            #     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings['prendpoint']))
             if settings['prendpoint'] is not None:
-                logger.info('[{}] : [INFO] PR Backedn endpoint set to {}'.format(datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings['prendpoint']))
+                pass
+                # logger.info('[{}] : [INFO] PR Backend endpoint set to {}'.format(datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings['prendpoint']))
             else:
-                logger.error('[%s] : [ERROR] From timestamp not set in conf or commandline!',
-                         datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
-                sys.exit(1)
+                try:
+                    readCnf['Connector']['Local']  # todo check if local exists in conf (elegant solution is needed)
+                except Exception:
+                    logger.error('[%s] : [ERROR] From timestamp not set in conf or commandline!',
+                             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
+                    sys.exit(1)
     else:
         logger.info('[%s] : [INFO] From timestamp set to %s',
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings['from'])
@@ -234,9 +247,12 @@ def main(argv,
             if settings['prendpoint'] is not None:
                 pass
             else:
-                logger.error('[%s] : [ERROR] To timestamp not set in conf or commandline!',
-                                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
-                sys.exit(1)
+                try:
+                    readCnf['Connector']['Local']  # todo check if local exists in conf (elegant solution is needed)
+                except Exception:
+                    logger.error('[%s] : [ERROR] To timestamp not set in conf or commandline!',
+                                         datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
+                    sys.exit(1)
     else:
         logger.info('[%s] : [INFO] To timestamp set to %s',
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings['to'])
@@ -326,15 +342,20 @@ def main(argv,
         except:
             logger.warning('[{}] : [WARN] Dask scheduler  set to default values'.format(datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
             dask_backend = False
+
     if settings['local'] is None:
         try:
             settings['local'] = readCnf['Connector']['Local']
             logger.info('[{}] : [INFO] Local datasource set to {}'.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings['local']))
-        except:
+        except Exception:
             logger.info('[{}] : [INFO] Local datasource set to default'.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
             settings['local'] = None
+            if settings['esendpoint'] is None and settings['prendpoint']:
+                logger.error('[{}] : [ERROR] No valid datasource set! Exiting ...'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+                sys.exit(1)
     else:
         logger.info('[{}] : [INFO] Local datasource set to {}'.format(
             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings['local']))

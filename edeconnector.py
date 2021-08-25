@@ -38,6 +38,7 @@ class Connector:
                  prKafkaEndpoint=None,
                  prKafkaPort=9092,
                  prKafkaTopic='edetopic'):
+        self.dataDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
         if esEndpoint is None:
             self.esInstance = None
         else:
