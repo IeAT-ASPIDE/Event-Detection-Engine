@@ -356,3 +356,52 @@ def wrapper_manifold(name,
         return 0
     return manifold_embeding
 
+
+def wrapper_plot_on_features(name,
+                             location,
+                             target='target',
+                             features=[]):
+    def plot_on_features(data,
+                         name=name,
+                         location=location,
+                         target=target,
+                         features=features,
+                         ):
+        """
+        :param data: dataset used for training or prediction
+        :param name: name to be used for visualization
+        :param location: location to save the figure
+        :param target: target (ground truth) column name, if missing this plot will be skipped unless default value is found
+        :param features: features to be ploted
+        :return: 0
+        """
+        if not features:
+            col_names_plt = list(data.columns.values)
+        else:
+            col_names_plt = features
+
+        for feature in col_names_plt:
+            if feature == 'time' or feature == target:
+                pass
+            else:
+                # fig, ax = plt.subplots(figsize=(15,10))
+                a = data[data[target] == 'target_cpu_master'] #class
+                b = data[data[target] == 'target_mem_master'] #class
+                c = data[data[target] == 'target_copy_master'] #class
+                d = data[data[target] == 'target_ddot_master'] #class
+                _ = plt.figure(figsize=(15,5))
+                _ = plt.plot(data[feature], color='blue', label='Normal')
+                _ = plt.plot(a[feature], linestyle='none', marker='X', color='red', markersize=4, label='CPU')
+                _ = plt.plot(b[feature], linestyle='none', marker='o', color='green', markersize=4, label='MEM')
+                _ = plt.plot(c[feature], linestyle='none', marker='*', color='m', markersize=4, label='COPY')
+                _ = plt.plot(d[feature], linestyle='none', marker='.', color='y', markersize=4, label='DDOT')
+                _ = plt.xlabel('Time')
+                _ = plt.ylabel(f'{feature}')
+                _ = plt.title(f'Anomaly Classes for {feature}')
+                _ = plt.grid()
+                _ = plt.legend(loc='best')
+                plot_name = f"Feature_plot_{feature}_{name}.png"
+                plt.savefig(os.path.join(location, plot_name))
+                plt.close();
+        return 0
+    return plot_on_features
