@@ -19,6 +19,7 @@ import joblib
 import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.ensemble import IsolationForest
+import matplotlib.pyplot as plt
 from sklearn import metrics
 # from sklearn.datasets.samples_generator import make_blobs
 from sklearn.preprocessing import StandardScaler
@@ -31,6 +32,7 @@ from datetime import datetime
 import time
 import sys
 import glob
+from sklearn.decomposition import SparsePCA, PCA
 from util import ut2hum
 
 
@@ -344,9 +346,9 @@ class SciCluster:
                         datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
                     clf = cluster_method.fit(data)
             except Exception as inst:
-                logger.error('[{}] : [ERROR] Failed to fit user defined method with dask backedn with {} and {}'.format(
+                logger.error('[{}] : [ERROR] Failed to fit user defined method with dask backend with {} and {}'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(inst), inst.args))
-                logger.warning('[{}] : [WARN] using default process based backedn for user defined method'.format(
+                logger.warning('[{}] : [WARN] using default process based backend for user defined method'.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
                 clf = cluster_method.fit(data)
         except Exception as inst:
@@ -358,6 +360,7 @@ class SciCluster:
         logger.debug('[{}] : [DEBUG] Predicted Anomaly Array {}'.format(
             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), predictions))
         fname = str(clf).split('(')[0]
+        self.__decision_boundary(clf, data, method=fname, mname=mname)
         self.__serializemodel(clf, fname, mname)
         return clf
 
@@ -401,3 +404,56 @@ class SciCluster:
             logger.info('[%s] : [INFO] Succesfully loaded %s model with the name %s',
                         datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), method, model)
             return smodel
+
+    def __decision_boundary(self,
+                            model,
+                            data,
+                            method,
+                            mname,
+                            anomaly_label=-1,
+                            ):
+        """
+        :param model: model to be refitted with 2 features (PCA)
+        :param data: dataset after PCA
+        :param method: method used for ploting decision boundary
+        :param mname: name of the model to be displayed
+        :param anomaly_label: label for anomaly instances (differs from method to method)
+        """
+        logger.info('[{}] : [INFO] Computing PCA with 2 components for decision boundary ...'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+        transformer = PCA(n_components=2)
+        transformer.fit(data)
+        data = transformer.transform(data)
+        # print("PCA data shape: {}".format(data.shape))
+        # fit model
+        model.set_params(
+            max_features=data.shape[-1])  # becouse we have only two features we must override previous setting
+        model.fit(data)
+        y_pred_outliers = model.predict(data)
+
+        # get anomaly index
+        anomaly_index_rf = np.where(y_pred_outliers == anomaly_label)
+
+        # Get anomalies based on index
+        ano_rf = data[anomaly_index_rf]
+        # plot the line, the samples, and the nearest vectors to the plane
+        xx, yy = np.meshgrid(np.linspace(-15, 25, 80), np.linspace(-5, 20, 80))
+        Z = model.decision_function(np.c_[xx.ravel(), yy.ravel()])
+        Z = Z.reshape(xx.shape)
+        plt.title(f"Decision Boundary for {method} with name {mname}")
+        plt.contourf(xx, yy, Z, cmap=plt.cm.Blues_r)
+        plt.contour(xx, yy, Z, levels=[0], linewidths=2, colors='black')
+        b1 = plt.scatter(data[:, 0], data[:, 1], c='white',
+                         s=20, edgecolor='k')
+        c = plt.scatter(ano_rf[:, 0], ano_rf[:, 1], c='red',
+                        s=20, edgecolor='k')
+        plt.axis('tight')
+        plt.xlim((-15, 25))
+        plt.ylim((-5, 20))
+        plt.legend([b1, c],
+                   ["normal",
+                    "anomaly", ],
+                   loc="upper left")
+        plot_name = f"Decision_Boundary_{method}_{mname}.png"
+        plt.savefig(os.path.join(self.modelDir, plot_name))
+        plt.close();
