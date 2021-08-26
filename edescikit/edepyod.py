@@ -109,7 +109,7 @@ else:
     from tensorflow.keras import backend as K
 
 
-class SO_GAAL_ASPIDE(BaseDetector):
+class SO_GAAL_EDE(BaseDetector):
     """Single-Objective Generative Adversarial Active Learning.
 
     SO-GAAL directly generates informative potential outliers to assist the
@@ -164,7 +164,7 @@ class SO_GAAL_ASPIDE(BaseDetector):
 
     def __init__(self, stop_epochs=20, lr_d=0.01, lr_g=0.0001,
                  decay=1e-6, momentum=0.9, contamination=0.1, verbose=0):
-        super(SO_GAAL_ASPIDE, self).__init__(contamination=contamination)
+        super(SO_GAAL_EDE, self).__init__(contamination=contamination)
         self.stop_epochs = stop_epochs
         self.lr_d = lr_d
         self.lr_g = lr_g
@@ -285,7 +285,7 @@ class SO_GAAL_ASPIDE(BaseDetector):
         return pred_scores
 
 
-class MO_GAAL_ASPIDE(BaseDetector):
+class MO_GAAL_EDE(BaseDetector):
     """Multi-Objective Generative Adversarial Active Learning.
 
     MO_GAAL directly generates informative potential outliers to assist the
@@ -343,7 +343,7 @@ class MO_GAAL_ASPIDE(BaseDetector):
 
     def __init__(self, k=10, stop_epochs=20, lr_d=0.01, lr_g=0.0001,
                  decay=1e-6, momentum=0.9, contamination=0.1, verbose=0):
-        super(MO_GAAL_ASPIDE, self).__init__(contamination=contamination)
+        super(MO_GAAL_EDE, self).__init__(contamination=contamination)
         self.k = k
         self.stop_epochs = stop_epochs
         self.lr_d = lr_d
@@ -524,7 +524,7 @@ class MO_GAAL_ASPIDE(BaseDetector):
 
 
 
-class VAE_ASPIDE(BaseDetector):
+class VAE_EDE(BaseDetector):
     """ Variational auto encoder
     Encoder maps X onto a latent space Z
     Decoder samples Z from N(0,1)
@@ -659,7 +659,7 @@ class VAE_ASPIDE(BaseDetector):
                  l2_regularizer=0.1, validation_size=0.1, preprocessing=True,
                  verbose=1, random_state=None, contamination=0.1,
                  gamma=1.0, capacity=0.0):
-        super(VAE_ASPIDE, self).__init__(contamination=contamination)
+        super(VAE_EDE, self).__init__(contamination=contamination)
         self.encoder_neurons = encoder_neurons
         self.decoder_neurons = decoder_neurons
         self.hidden_activation = hidden_activation
@@ -1127,6 +1127,7 @@ class AutoEncoder(BaseDetector):
         # Predict on X and return the reconstruction errors
         pred_scores = self.model_.predict(X_norm)
         return pairwise_distances_no_broadcast(X_norm, pred_scores)
+
 
 def ede_abod(contamination):
     clf = ABOD(contamination=contamination)
