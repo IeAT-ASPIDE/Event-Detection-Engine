@@ -113,7 +113,7 @@ def wrapper_analysis_corr(name,
         fig_loc = os.path.join(location, "pearson_corr_{}.png".format(name))
         file_loc = os.path.join(location, "pearson_corr_{}.csv".format(name))
         corr.to_csv(file_loc)
-        fig.savefig(fig_loc)
+        fig.savefig(fig_loc, bbox_inches="tight")
         plt.close()
         return name
     return pearson_corelation_heatmap
@@ -135,7 +135,7 @@ def wrapper_analysis_plot(name,
         # sns_plot = sns.replot(x=)
         fig = sns_plot.get_figure()
         fig_loc = os.path.join(location, "lineplot_{}.png".format(name))
-        fig.savefig(fig_loc)
+        fig.savefig(fig_loc, bbox_inches="tight")
         plt.close()
         return name
     return line_plot
@@ -177,7 +177,7 @@ def wrapper_rank1(name,
         df_rank1d.plot(kind='bar', x="features", rot=1, title=f"{algorithm} rank", sort_columns=True, figsize=(30,45))
         df_rank1d.to_csv(os.path.join(location, f"Rank1D_{algorithm}_{name}.csv"), index=False)
         plt.xticks(rotation=90)
-        plt.savefig(os.path.join(location, f"Rank1D_{algorithm}_{name}.png"))#
+        plt.savefig(os.path.join(location, f"Rank1D_{algorithm}_{name}.png"), bbox_inches="tight")#
         plt.close()
         return name
     return rank1
@@ -261,7 +261,7 @@ def wrapper_improved_pearson(name,
         ht_hm = sns.heatmap(p_test, mask=mask, ax=ax, cmap=cmap, annot=show)
         ax.set_title(f'Person correlation {name}', fontsize=20)
         hm_fig = "Pearson_{}.png".format(name)
-        ht_hm.figure.savefig(os.path.join(location, hm_fig))
+        ht_hm.figure.savefig(os.path.join(location, hm_fig), bbox_inches="tight")
         plt.close()
         return name
     return improved_pearsons
@@ -401,7 +401,7 @@ def wrapper_plot_on_features(name,
                 _ = plt.grid()
                 _ = plt.legend(loc='best')
                 plot_name = f"Feature_plot_{feature}_{name}.png"
-                plt.savefig(os.path.join(location, plot_name))
+                plt.savefig(os.path.join(location, plot_name), bbox_inches="tight")
                 plt.close();
         return 0
     return plot_on_features
