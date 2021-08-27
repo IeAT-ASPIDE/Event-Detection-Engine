@@ -34,7 +34,10 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.cluster import DBSCAN
-from sklearn.metrics import make_scorer, SCORERS
+from sklearn.metrics import make_scorer, SCORERS, get_scorer, classification_report, confusion_matrix
+from imblearn.metrics import classification_report_imbalanced
+import matplotlib.pyplot as plt
+import seaborn as sns
 import yaml
 import joblib
 import pickle as pickle
@@ -57,6 +60,7 @@ class SciClassification:
                  validratio,
                  compare,
                  cv=None,
+                 verbose=False,
                  trainscore=False,
                  scorers=None,
                  returnestimators=False):
@@ -69,6 +73,7 @@ class SciClassification:
         self.validratio = validratio
         self.compare = compare
         self.cv = cv
+        self.verbose=verbose
         self.trainscore = trainscore
         self.scorers = scorers
         self.returnestimators = returnestimators
@@ -682,6 +687,7 @@ class SciClassification:
         y_factor = pd.factorize(y)
         y = y_factor[0]
         y_definitions = y_factor[1]
+
         # y = y.astype(int) # fix y being set as object
         user_m = False
         if classification_method is not None and classification_method != 'randomforest':  # TODO fix
@@ -863,13 +869,24 @@ class SciClassification:
                     logger.info('[{}] : [INFO] Using Dask backend for CV of {}'.format(
                         datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), classification_type))
                     if user_m:
-                        cv_results = cross_validate(classification_method, X, y, scoring=scorer, return_train_score=self.trainscore,
-                                                    return_estimator=self.returnestimators, cv=cv, error_score='raise')
-                        # print(cv_results)
-                        # sys.exit()
+                        if self.verbose:
+
+                            cv_results = self.__ede_cross_validate(classification_method, X, y, scoring=scorer,
+                                                      return_estimator=self.returnestimators, cv=cv,
+                                                                   definitions=y_definitions, model_name=classification_type)
+
+                        else:
+                            cv_results = cross_validate(classification_method, X, y, scoring=scorer, return_train_score=self.trainscore,
+                                                        return_estimator=self.returnestimators, cv=cv, error_score='raise')
                     else:
-                        cv_results = cross_validate(clf, X, y, scoring=scorer, return_train_score=self.trainscore,
-                                                return_estimator=self.returnestimators, cv=cv)
+                        if self.verbose:
+                            cv_results = self.__ede_cross_validate(clf, X, y, scoring=scorer,
+                                                                   return_estimator=self.returnestimators, cv=cv,
+                                                                   definitions=y_definitions,
+                                                                   model_name=classification_type)
+                        else:
+                            cv_results = cross_validate(clf, X, y, scoring=scorer, return_train_score=self.trainscore,
+                                                    return_estimator=self.returnestimators, cv=cv)
             except Exception as inst:
                 logger.error('[{}] : [ERROR] Failed to fit {} during Cross Validation with {} and {}'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'),classification_type, type(inst), inst.args))
@@ -903,9 +920,143 @@ class SciClassification:
                              y,
                              scoring,
                              cv,
-                             return_estimator
+                             return_estimator,
+                             definitions,
+                             model_name
                              ):
-        
+        """
+        Used to generate a more clear view of the performance of the initialied model on a fold by fold basis.
+        Full Classification and Imbalanced Reports are generated and saved. Confusion metrics and
+        Feature importance if applicable to the model.
+
+        :param model: model instance created from conf yaml parameters
+        :param X: training dataframe
+        :param y: ground truth from dataframe
+        :param scoring: scoring functions as dict
+        :param cv: type
+        :param return_estimator: if True estimators will be returned
+        :param definitions: factorization of ground truth defitnitions
+        :param model_name: name of the model
+        :return: 0
+        """
+        cv_results = {}
+        cv_results['fit_time'] = []
+        cv_results['scorer_time'] = []
+        cv_results['estimator'] = []
+        for scorer_name in scoring.keys():
+            cv_results[f"train_{scorer_name}"] = []
+            cv_results[f"test_{scorer_name}"] = []
+
+        y = pd.Series(y)  # convert y to pd.series for iloc
+        fold = 1
+        for train_index, test_index in cv.split(X, y):
+            # print("Starting fold {}".format(fold))
+            logger.info('[{}] : [INFO] Starting CV Fold {}'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), fold))
+            Xtrain, Xtest = X.iloc[train_index], X.iloc[test_index]
+            ytrain, ytest = y.iloc[train_index], y.iloc[test_index]
+
+            start_training_time = time.time()
+            model.fit(Xtrain, ytrain)
+            total_training_time = time.time() - start_training_time
+            cv_results['fit_time'].append(total_training_time)
+            if return_estimator:
+                cv_results['estimator'].append(model)
+
+            start_prediction_time = time.time()
+            ypred_test = model.predict(Xtest)
+            total_prediction_time = time.time() - start_prediction_time
+            cv_results['scorer_time'].append(total_prediction_time)
+            for k, v in scoring.items():  # scoring similar to cv eval and HPO
+                scorer = get_scorer(v)
+                score_testing = scorer(model, Xtest, ytest)
+                score_training = scorer(model, Xtrain, ytrain)
+                logger.info('[{}] : [INFO] Fold {} {} training score is {}'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), fold, k, score_training))
+
+                logger.info('[{}] : [INFO] Fold {} {} testing score is {}'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), fold, k, score_testing))
+
+                cv_results[f"train_{k}"].append(score_training)
+                cv_results[f"test_{k}"].append(score_testing)
+
+                # Full classification report
+                logger.info('[{}] : [INFO] Computing classification report for fold {}'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), fold))
+                print(classification_report(ytest, ypred_test, digits=4, target_names=definitions))
+                cf_report = classification_report(ytest, ypred_test, output_dict=True, digits=4,
+                                                  target_names=definitions)
+                df_classification_report = pd.DataFrame(cf_report).transpose()
+                cf_report_name = f"Classification_Report_{model_name}_Fold_{fold}.csv"
+                df_classification_report.to_csv(os.path.join(self.modelDir, cf_report_name))
+
+                # Full imbalanced classification report
+                logger.info('[{}] : [INFO] Computing imbalanced classification report for fold {}'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), fold))
+                print(classification_report_imbalanced(ytest, ypred_test, digits=4, target_names=definitions))
+                imb_cf_report = classification_report_imbalanced(ytest, ypred_test, output_dict=True, digits=4,
+                                                                 target_names=definitions)
+                df_imb_classification_report = pd.DataFrame(imb_cf_report).transpose()
+                imb_df_report_name = f"Imbalanced_classification_Report_{model_name}_Fold_{fold}.csv"
+                df_imb_classification_report.to_csv(os.path.join(self.modelDir, imb_df_report_name))
+
+                # Confusion matrix
+                logger.info('[{}] : [INFO] Computing confusion matrix for fold {}'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), fold))
+                self.__confusion_matrx(ytest, ypred_test, definitions, model_name=model_name, fold=fold)
+
+                # Feature Importance, if applicable
+                self.__feature_imp(model, model_name, X, fold)
+                fold += 1
+        return cv_results
+
+    def __feature_imp(self,
+                      model,
+                      model_name,
+                      X,
+                      fold=None):
+        feat_importances = pd.Series(model.feature_importances_, index=X.columns)
+        sorted_feature = feat_importances.sort_values(ascending=True)
+        sorted_feature = sorted_feature.tail(30)
+        n_col = len(sorted_feature)
+        # plt.figure(figsize=(30, 10))
+        plt.figure()
+        plt.autoscale()
+        if fold is None:
+            plt.title("Feature importances {}".format(model_name), fontsize=15)
+            fi_fig = "FI_{}.png".format(model_name)
+        else:
+            plt.title("Feature importances {} Fold {}".format(model_name, fold), fontsize=15)
+            fi_fig = "FI_{}_{}.png".format(model_name, fold)
+        plt.barh(range(n_col), sorted_feature,
+                 color="r", align="center")
+        # If you want to define your own labels,
+        # change indices to a list of labels on the following line.
+        plt.yticks(range(n_col), sorted_feature.index)
+        plt.ylim([-1, n_col])
+        plt.savefig(os.path.join(self.modelDir, fi_fig), bbox_inches="tight")
+        plt.close()
+        return 0
+
+    def __confusion_matrx(self,
+                          ytest,
+                          ypred_test,
+                          definitions,
+                          model_name,
+                          fold=None):
+
+        cf_matrix = confusion_matrix(ytest, ypred_test)
+        ht_cf = sns.heatmap(cf_matrix, annot=True, yticklabels=list(definitions), xticklabels=list(definitions))
+        if fold is None:
+            plt.title('Confusion Matrix', fontsize=15)  # title with fontsize 20
+            cf_fig = "CM_{}.png".format(model_name)
+        else:
+            plt.title('Confusion Matrix Fold {}'.format(fold), fontsize=15)  # title with fontsize 20
+            cf_fig = "CM_{}_{}.png".format(model_name, fold)
+        plt.xlabel('Ground Truth', fontsize=10)  # x-axis label with fontsize 15
+        plt.ylabel('Predictions', fontsize=10)  # y-axis label with fontsize 15
+        ht_cf.figure.savefig(os.path.join(self.modelDir, cf_fig), bbox_inches="tight")
+        plt.close()
         return 0
 
     def dask_hpo(self, param_dist,
@@ -1057,8 +1208,12 @@ class SciClassification:
             logger.warning('[{}] : [WARN] Skipping HPO Report ...'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
 
-
-    def __appendPredictions(self, method, mname, data, pred, pred_proba=None):
+    def __appendPredictions(self,
+                            method,
+                            mname,
+                            data,
+                            pred,
+                            pred_proba=None):
         fpath = "{}_{}.csv".format(method, mname)
         fname = os.path.join(self.modelDir, fpath)
         logger.info('[{}] : [INFO] Appending predictions to  data ... '.format(
@@ -1418,7 +1573,7 @@ class SciClassification:
                 sys.exit(2)
         for user_name, sc_name in scorers.items():
             try:
-                sc_mod = importlib.import_module(self.skscorer)
+                sc_mod = importlib.import_module(self.skscorer) #todo add support for non sklearn based scoring
                 scorer_instance = getattr(sc_mod, sc_name)
                 scorer = make_scorer(scorer_instance)
                 logger.info('[{}] : [INFO] Found user defined scorer. Initializing {} '.format(

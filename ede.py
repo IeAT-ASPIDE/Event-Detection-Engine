@@ -80,6 +80,7 @@ def main(argv,
     settings.cv = None
     settings.trainscore = None
     settings.scorer = None
+    settings.verbosecv = None
     settings.returnestimators = None
     settings.analysis = None
     settings.validate = None
@@ -575,6 +576,14 @@ def main(argv,
         except:
             logger.info('[{}] : [INFO] No Training scorers defined'.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+
+    if settings.verbosecv is None:
+        try:
+            settings.verbosecv = readCnf['Training']['Verbose']
+            logger.info('[{}] : [INFO] Training verbose CV set'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+        except Exception:
+            pass
 
     if settings.returnestimators is None:
         try:
