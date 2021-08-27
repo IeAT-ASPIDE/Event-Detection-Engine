@@ -357,11 +357,20 @@ class SciCluster:
                 type(inst), inst.args))
             sys.exit(1)
         predictions = clf.predict(data)
+        if list(np.unique(predictions)) == [0, 1]:
+            anomaly_marker = 1
+            normal_marker = 0
+        else:
+            anomaly_marker = -1
+            normal_marker = 1
+        logger.info('[{}] : [INFO] Number of Predicted Anomalies {} from a total of {} datapoints.'.format(
+            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), list(predictions).count(anomaly_marker), len(list(predictions))))
         logger.debug('[{}] : [DEBUG] Predicted Anomaly Array {}'.format(
             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), predictions))
         fname = str(clf).split('(')[0]
-        self.__plot_feature_sep(data, predictions, method=fname, mname=mname)
-        self.__decision_boundary(clf, data, method=fname, mname=mname)
+        self.__plot_feature_sep(data, predictions, method=fname, mname=mname, anomaly_label=anomaly_marker,
+                                normal_label=normal_marker)
+        self.__decision_boundary(clf, data, method=fname, mname=mname,anomaly_label=anomaly_marker)
         self.__serializemodel(clf, fname, mname)
         return clf
 
@@ -427,8 +436,17 @@ class SciCluster:
         data = transformer.transform(data)
         # print("PCA data shape: {}".format(data.shape))
         # fit model
-        model.set_params(
-            max_features=data.shape[-1])  # becouse we have only two features we must override previous setting
+        try:
+            model.set_params(
+                max_features=data.shape[-1])  # becouse we have only two features we must override previous setting
+        except ValueError:
+            logger.debug('[{}] : [Debug] Model not effected by max feature parameter, setting encoding and decoding size'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+            model.set_params(
+                encoder_neurons=[2, 64, 32],
+                decoder_neurons=[32, 64, 2]
+            )
+
         model.fit(data)
         y_pred_outliers = model.predict(data)
 

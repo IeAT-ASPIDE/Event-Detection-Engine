@@ -865,7 +865,7 @@ class VAE_EDE(BaseDetector):
         pred_scores = self.model_.predict(X_norm)
         return pairwise_distances_no_broadcast(X_norm, pred_scores)
 
-class AutoEncoder(BaseDetector):
+class AutoEncoder_EDE(BaseDetector):
     """Auto Encoder (AE) is a type of neural networks for learning useful data
     representations unsupervisedly. Similar to PCA, AE could be used to
     detect outlying objects in the data by calculating the reconstruction
@@ -973,7 +973,7 @@ class AutoEncoder(BaseDetector):
                  epochs=100, batch_size=32, dropout_rate=0.2,
                  l2_regularizer=0.1, validation_size=0.1, preprocessing=True,
                  verbose=1, random_state=None, contamination=0.1):
-        super(AutoEncoder, self).__init__(contamination=contamination)
+        super(AutoEncoder_EDE, self).__init__(contamination=contamination)
         self.hidden_neurons = hidden_neurons
         self.hidden_activation = hidden_activation
         self.output_activation = output_activation
@@ -1129,23 +1129,109 @@ class AutoEncoder(BaseDetector):
         return pairwise_distances_no_broadcast(X_norm, pred_scores)
 
 
-def ede_abod(contamination):
-    clf = ABOD(contamination=contamination)
+def ede_abod(contamination,
+             n_neighbors=5,
+             method='fast'):
+    clf = ABOD(contamination=contamination,
+               n_neighbors=n_neighbors,
+               method=method)
     return clf
 
 
 def ede_cblof(contamination,
-              check_estimator,
-              random_state):
+              clustering_estimator=None,
+              alpha=0.9,
+              beta=5,
+              use_weights=False,
+              n_clusters=8,
+              check_estimator=False,
+              random_state=42,
+              n_jobs=1):
 
     clf = CBLOF(contamination=contamination,
+                clustering_estimator=clustering_estimator,
+                alpha=alpha,
+                beta=beta,
+                use_weights=use_weights,
+                n_clusters=n_clusters,
                 check_estimator=check_estimator,
-                random_state=random_state)
+                random_state=random_state,
+                n_jobs=n_jobs)
     return clf
 
 
-def ede_hbos(contamination):
-    clf = HBOS(contamination=contamination)
+def ede_hbos(contamination,
+             n_bins=10,
+             alpha=0.1,
+             tol=0.5):
+    clf = HBOS(contamination=contamination,
+               n_bins=n_bins,
+               alpha=alpha,
+               tol=tol)
+    return clf
+
+
+def ede_ae():
+    clf = AutoEncoder_EDE()
+    return clf
+
+
+def ede_vae(contamination,
+                  encoder_neurons=[128, 64, 32],
+                  decoder_neurons=[32, 64, 128],
+                  hidden_activation='relu',
+                  output_activation='sigmoid',
+                  loss=mean_squared_error,
+                  gamma=1.0,
+                  capacity=0.0,
+                  optimizer='adam',
+                  epochs=100,
+                  batch_size=32,
+                  dropout_rate=0.2,
+                  l2_regularizer=0.1,
+                  validation_size=0.1,
+                  preprocessing=True,
+                  verbose=1,
+                  random_state=42):
+    clf = VAE_EDE(contamination=contamination,
+                  encoder_neurons=encoder_neurons,
+                  decoder_neurons=decoder_neurons,
+                  hidden_activation=hidden_activation,
+                  output_activation=output_activation,
+                  loss=loss,
+                  gamma=gamma,
+                  capacity=capacity,
+                  optimizer=optimizer,
+                  epochs=epochs,
+                  batch_size=batch_size,
+                  dropout_rate=dropout_rate,
+                  l2_regularizer=l2_regularizer,
+                  validation_size=validation_size,
+                  preprocessing=preprocessing,
+                  verbose=verbose,
+                  random_state=random_state
+                  )
+    return clf
+
+
+def ede_iso(contamination,
+            n_estimators=100,
+            max_features=1.0,
+            max_samples='auto',
+            bootstrap=False,
+            random_state=42,
+            behaviour='old',
+            verbose=0,
+            n_jobs=-1):
+    clf = IForest(contamination=contamination,
+                  n_estimators=n_estimators,
+                  random_state=random_state,
+                  max_features=max_features,
+                  max_samples=max_samples,
+                  bootstrap=bootstrap,
+                  behaviour=behaviour,
+                  verbose=verbose,
+                  n_jobs=n_jobs)
     return clf
 
 

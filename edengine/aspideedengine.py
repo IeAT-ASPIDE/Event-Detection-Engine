@@ -760,7 +760,7 @@ class EDEngine:
                     dbscanmodel = dsdbscan.dask_sdbscanTrain(settings=self.methodSettings, mname=self.export, data=asudata)
                 else:
                     if not isinstance(self.trainmethod, str):
-                        print(self.trainmethod)
+                        # print(self.trainmethod)
                         logger.info('[{}] : [INFO] Detected user defined method, initializing ...'.format(
                             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
                         umeth = sede.SciCluster(self.modelsDir)
