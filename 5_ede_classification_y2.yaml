@@ -108,7 +108,17 @@ Training:
         num: 10
     scorer: f1_weighted
     n_jobs: 5
-  
+  ValidationCurve:
+    param_name: n_estimators
+    param_range:
+      - 10
+      - 20
+      - 60
+      - 100
+      - 200
+      - 600
+    scoring: f1_weighted
+    n_jobs: 8
   Verbose: 0
 
 #Training:

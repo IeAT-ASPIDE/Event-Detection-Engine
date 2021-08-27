@@ -79,6 +79,7 @@ class EDEngine:
         self.analysis = settingsDict['analysis']
         self.validate = settingsDict['validate']
         self.learningcurve = settingsDict['LearningCurve']
+        self.validationcurve = settingsDict['ValidationCurve']
         self.export = settingsDict['export']
         self.detect = settingsDict['detect']
         self.sload = settingsDict['sload']
@@ -782,7 +783,8 @@ class EDEngine:
                                                   validratio=self.validratio, compare=self.compare, cv=self.cv,
                                                   trainscore=self.trainscore, scorers=self.scorers,
                                                   returnestimators=self.returnestimators,
-                                                  verbose=self.verbosecv, learningcurve=self.learningcurve)
+                                                  verbose=self.verbosecv, learningcurve=self.learningcurve,
+                                                  validationcurve=self.validationcurve)
                 clf = classede.dask_classifier(settings=self.methodSettings, mname=self.export, X=asudata, y=y,
                                                classification_method=self.trainmethod)
 

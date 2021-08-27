@@ -63,6 +63,7 @@ class SciClassification:
                  cv=None,
                  verbose=False,
                  learningcurve=None,
+                 validationcurve=None,
                  trainscore=False,
                  scorers=None,
                  returnestimators=False):
@@ -77,6 +78,7 @@ class SciClassification:
         self.cv = cv
         self.verbose = verbose
         self.learningcurve = learningcurve
+        self.validationcurve = validationcurve
         self.trainscore = trainscore
         self.scorers = scorers
         self.returnestimators = returnestimators
@@ -914,12 +916,41 @@ class SciClassification:
                 cv_name = 5  # Default value for random and Grid
             else:
                 cv_name = cv
-            if self.learningcurve is not None:
-                logger.info('[{}] : [INFO] Computing Learning Curve for {} of type {} ...'.format(
-                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), self.export, classification_type))
-                self.__learning_curve(classification_method, X, y, cv, model_name=classification_type)
             cv_res_loc = os.path.join(self.modelDir, "{}_CV_{}_restults.csv".format(classification_type, cv_name))
             cv_res.to_csv(cv_res_loc, index=False)
+
+            if self.learningcurve is not None:
+                logger.info('[{}] : [INFO] Computing Learning Curve for {} of type {} ...'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), self.export,
+                    classification_type))
+                self.__learning_curve(classification_method, X, y, cv, model_name=classification_type)
+            if self.validationcurve is not None:
+                logger.info('[{}] : [INFO] Computing Validation Curve for {} of type {} ...'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), self.export,
+                    classification_type))
+                self.__validation_curve(classification_method, X, y, cv, model_name=classification_type)
+
+    def __validation_curve(self,
+                           model,
+                           X,
+                           y,
+                           cv,
+                           model_name):
+        try:
+            param_name = self.validationcurve['param_name']
+            param_range = self.validationcurve['param_range']
+            scorer = self.validationcurve['scoring']
+            n_jobs = self.validationcurve['n_jobs']
+        except Exception as inst:
+            logger.error('[{}] : [ERROR] Validation Curve parameter error with {} and {}'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(inst), inst.args))
+            sys.exit(1)
+        viz = ValidationCurve(model, param_name=param_name, param_range=param_range,
+                              logx=True, cv=cv, scoring=scorer, n_jobs=n_jobs)
+        viz.fit(X, y)
+        validation_curve_fig = f"Validation_Curve_{self.export}_{model_name}.png"
+        viz.show(outpath=os.path.join(self.modelDir, validation_curve_fig))
+        plt.close()
 
     def __learning_curve(self,
                          model,
@@ -943,15 +974,19 @@ class SciClassification:
         :param model_name: name of the model set by export
         :return:
         """
-        sizes = self.learningcurve['sizes'] # size is set in yaml as a linspace
-        scorer = self.learningcurve['scorer'] # scorer must be string from sklearn metrics
-        n_jobs = self.learningcurve['n_jobs']
+        try:
+            sizes = self.learningcurve['sizes'] # size is set in yaml as a linspace
+            scorer = self.learningcurve['scorer'] # scorer must be string from sklearn metrics
+            n_jobs = self.learningcurve['n_jobs']
+        except Exception as inst:
+            logger.error('[{}] : [ERROR] Learning Curve parameter error with {} and {}'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(inst), inst.args))
+            sys.exit(1)
         viz = LearningCurve(model, cv=cv, scoring=scorer, train_sizes=sizes, n_jobs=n_jobs)
         viz.fit(X, y)
         learning_curve_fig = f"Learning_Curve_{self.export}_{model_name}.png"
         viz.show(outpath=os.path.join(self.modelDir, learning_curve_fig))
         plt.close()
-        return 0
 
     def __ede_cross_validate(self,
                              model,
@@ -1042,7 +1077,7 @@ class SciClassification:
                 # Confusion matrix
                 logger.info('[{}] : [INFO] Computing confusion matrix for fold {}'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), fold))
-                self.__confusion_matrx(ytest, ypred_test, definitions, model_name=model_name, fold=fold)
+                self.__confusion_matrix(ytest, ypred_test, definitions, model_name=model_name, fold=fold)
 
                 # Feature Importance, if applicable
                 try:
@@ -1082,12 +1117,12 @@ class SciClassification:
         plt.close()
         return 0
 
-    def __confusion_matrx(self,
-                          ytest,
-                          ypred_test,
-                          definitions,
-                          model_name,
-                          fold=None):
+    def __confusion_matrix(self,
+                           ytest,
+                           ypred_test,
+                           definitions,
+                           model_name,
+                           fold=None):
 
         cf_matrix = confusion_matrix(ytest, ypred_test)
         ht_cf = sns.heatmap(cf_matrix, annot=True, yticklabels=list(definitions), xticklabels=list(definitions))
@@ -1115,7 +1150,7 @@ class SciClassification:
             user_m = True
             try:
                 classification_type = str(classification_method).split('(')[0]
-            except:
+            except Exception:
                 classification_type = type(classification_method)
 
             logger.info('[{}] : [INFO] Classification Method set to {}'.format(
@@ -1147,7 +1182,7 @@ class SciClassification:
                 logger.info('[{}] : [INFO] {} Cross Validation set to use {}'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), classification_type,
                     self.cv['Type']))
-            except:
+            except Exception:
                 logger.error('[{}] : [ERROR] Cross Validation split generator type not set!'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
                 sys.exit(1)

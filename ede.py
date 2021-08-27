@@ -82,6 +82,7 @@ def main(argv,
     settings.scorer = None
     settings.verbosecv = None
     settings.LearningCurve = None
+    settings.ValidationCurve = None
     settings.returnestimators = None
     settings.analysis = None
     settings.validate = None
@@ -590,6 +591,14 @@ def main(argv,
         try:
             settings.LearningCurve = readCnf['Training']['LearningCurve']
             logger.info('[{}] : [INFO] Training Learning Curve set'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+        except Exception:
+            pass
+
+    if settings.ValidationCurve is None:
+        try:
+            settings.ValidationCurve = readCnf['Training']['ValidationCurve']
+            logger.info('[{}] : [INFO] Training Validation Curve set'.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
         except Exception:
             pass
