@@ -37,6 +37,7 @@ from sklearn.cluster import DBSCAN
 from sklearn.metrics import make_scorer, SCORERS, get_scorer, classification_report, confusion_matrix
 from imblearn.metrics import classification_report_imbalanced
 from yellowbrick.model_selection import LearningCurve, ValidationCurve, RFECV
+from yellowbrick.style import set_palette
 import matplotlib.pyplot as plt
 import seaborn as sns
 import yaml
@@ -49,6 +50,9 @@ import itertools
 pd.options.mode.chained_assignment = None
 import warnings
 warnings.filterwarnings("ignore")
+
+#set color palette yellowbrick
+set_palette('sns_deep')
 
 
 class SciClassification:
@@ -936,6 +940,20 @@ class SciClassification:
                            y,
                            cv,
                            model_name):
+
+        """
+        Model validation isused to determine how efective an estimator is on training data and out of core data.
+        A hyperparameter of the model can be selected which the user feels can be further tweaked for better
+        operation in the desired feature space. We should mention that hyperparameter optimization is done via other
+        methods from EDE much better, however finetuning can be done much easier by end-users using this method.
+
+        :param model: model instance created from conf yaml parameters
+        :param X: training dataframe
+        :param y: ground truth from dataframe
+        :param cv: type can be int or dictionary describing sklearn compatible type
+        :param model_name: name of the model set by export
+        """
+
         try:
             param_name = self.validationcurve['param_name']
             param_range = self.validationcurve['param_range']
