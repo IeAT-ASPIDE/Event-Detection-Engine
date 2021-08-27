@@ -81,6 +81,7 @@ def main(argv,
     settings.trainscore = None
     settings.scorer = None
     settings.verbosecv = None
+    settings.LearningCurve = None
     settings.returnestimators = None
     settings.analysis = None
     settings.validate = None
@@ -581,6 +582,14 @@ def main(argv,
         try:
             settings.verbosecv = readCnf['Training']['Verbose']
             logger.info('[{}] : [INFO] Training verbose CV set'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+        except Exception:
+            pass
+
+    if settings.LearningCurve is None:
+        try:
+            settings.LearningCurve = readCnf['Training']['LearningCurve']
+            logger.info('[{}] : [INFO] Training Learning Curve set'.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
         except Exception:
             pass

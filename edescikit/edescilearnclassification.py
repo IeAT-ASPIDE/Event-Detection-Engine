@@ -36,6 +36,7 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.cluster import DBSCAN
 from sklearn.metrics import make_scorer, SCORERS, get_scorer, classification_report, confusion_matrix
 from imblearn.metrics import classification_report_imbalanced
+from yellowbrick.model_selection import LearningCurve, ValidationCurve, RFECV
 import matplotlib.pyplot as plt
 import seaborn as sns
 import yaml
@@ -61,6 +62,7 @@ class SciClassification:
                  compare,
                  cv=None,
                  verbose=False,
+                 learningcurve=None,
                  trainscore=False,
                  scorers=None,
                  returnestimators=False):
@@ -73,7 +75,8 @@ class SciClassification:
         self.validratio = validratio
         self.compare = compare
         self.cv = cv
-        self.verbose=verbose
+        self.verbose = verbose
+        self.learningcurve = learningcurve
         self.trainscore = trainscore
         self.scorers = scorers
         self.returnestimators = returnestimators
@@ -885,7 +888,7 @@ class SciClassification:
                                                                    definitions=y_definitions,
                                                                    model_name=classification_type)
                         else:
-                            cv_results = cross_validate(clf, X, y, scoring=scorer, return_train_score=self.trainscore,
+                            cv_results = cross_validate(clf, X, y, scoring=scorer, return_train_score=self.trainscore,  # todo check clf, method definitions in yaml string only
                                                     return_estimator=self.returnestimators, cv=cv)
             except Exception as inst:
                 logger.error('[{}] : [ERROR] Failed to fit {} during Cross Validation with {} and {}'.format(
@@ -911,8 +914,44 @@ class SciClassification:
                 cv_name = 5  # Default value for random and Grid
             else:
                 cv_name = cv
+            if self.learningcurve is not None:
+                logger.info('[{}] : [INFO] Computing Learning Curve for {} of type {} ...'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), self.export, classification_type))
+                self.__learning_curve(classification_method, X, y, cv, model_name=classification_type)
             cv_res_loc = os.path.join(self.modelDir, "{}_CV_{}_restults.csv".format(classification_type, cv_name))
             cv_res.to_csv(cv_res_loc, index=False)
+
+    def __learning_curve(self,
+                         model,
+                         X,
+                         y,
+                         cv,
+                         model_name
+                         ):
+        """
+        A learning curve shows the relationship between training scores vs cv test scores for
+        an estimator with varying number of training sample (see sizes param).
+        The visualization generaly shows two things:
+        1. How much an estimator benefits from more data.
+        2. If the estimator is more sensitive to error due to variance vs bias.
+
+
+        :param model: model instance created from conf yaml parameters
+        :param X: training dataframe
+        :param y: ground truth from dataframe
+        :param cv: type can be int or dictionary describing sklearn compatible type
+        :param model_name: name of the model set by export
+        :return:
+        """
+        sizes = self.learningcurve['sizes'] # size is set in yaml as a linspace
+        scorer = self.learningcurve['scorer'] # scorer must be string from sklearn metrics
+        n_jobs = self.learningcurve['n_jobs']
+        viz = LearningCurve(model, cv=cv, scoring=scorer, train_sizes=sizes, n_jobs=n_jobs)
+        viz.fit(X, y)
+        learning_curve_fig = f"Learning_Curve_{self.export}_{model_name}.png"
+        viz.show(outpath=os.path.join(self.modelDir, learning_curve_fig))
+        plt.close()
+        return 0
 
     def __ede_cross_validate(self,
                              model,
@@ -933,10 +972,10 @@ class SciClassification:
         :param X: training dataframe
         :param y: ground truth from dataframe
         :param scoring: scoring functions as dict
-        :param cv: type
+        :param cv: type can be int or dictionary describing sklearn compatible type
         :param return_estimator: if True estimators will be returned
         :param definitions: factorization of ground truth defitnitions
-        :param model_name: name of the model
+        :param model_name: set by export
         :return: 0
         """
         cv_results = {}
