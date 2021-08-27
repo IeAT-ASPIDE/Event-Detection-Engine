@@ -678,12 +678,17 @@ class SciClassification:
                         mname,
                         X,
                         y, classification_method=None):
+        # Factorize input
+        y_factor = pd.factorize(y)
+        y = y_factor[0]
+        y_definitions = y_factor[1]
+        # y = y.astype(int) # fix y being set as object
         user_m = False
         if classification_method is not None and classification_method != 'randomforest':  # TODO fix
             user_m = True
             try:
                 classification_type = str(classification_method).split('(')[0]
-            except:
+            except Exception:
                 classification_type = type(classification_method)
 
             logger.info('[{}] : [INFO] Classification Method set to {}'.format(
@@ -859,7 +864,9 @@ class SciClassification:
                         datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), classification_type))
                     if user_m:
                         cv_results = cross_validate(classification_method, X, y, scoring=scorer, return_train_score=self.trainscore,
-                                                    return_estimator=self.returnestimators, cv=cv)
+                                                    return_estimator=self.returnestimators, cv=cv, error_score='raise')
+                        # print(cv_results)
+                        # sys.exit()
                     else:
                         cv_results = cross_validate(clf, X, y, scoring=scorer, return_train_score=self.trainscore,
                                                 return_estimator=self.returnestimators, cv=cv)
@@ -889,6 +896,17 @@ class SciClassification:
                 cv_name = cv
             cv_res_loc = os.path.join(self.modelDir, "{}_CV_{}_restults.csv".format(classification_type, cv_name))
             cv_res.to_csv(cv_res_loc, index=False)
+
+    def __ede_cross_validate(self,
+                             model,
+                             X,
+                             y,
+                             scoring,
+                             cv,
+                             return_estimator
+                             ):
+        
+        return 0
 
     def dask_hpo(self, param_dist,
                         mname,
