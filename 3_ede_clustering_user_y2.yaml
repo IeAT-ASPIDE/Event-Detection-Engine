@@ -1,0 +1,100 @@
+Connector:
+#  PREndpoint: 194.102.62.155
+  Dask:
+    SchedulerEndpoint: local
+    Scale: 3
+    SchedulerPort: 8787
+    EnforceCheck: False
+  MPort: 9200 # Moitoring port
+  KafkaEndpoint: 10.9.8.136
+  KafkaPort: 9092
+  KafkaTopic: edetopic
+#  Query: { "query": 'node_disk_written_bytes_total[5m]'}
+  Query: {"query": '{__name__=~"node.+"}[1m]'}
+  MetricsInterval: "1m" # Metrics datapoint interval definition
+  QSize: 0
+  Index: time
+  QDelay: 10s # Polling period for metrics fetching
+  Local: /Users/Gabriel/Dropbox/Research/ASPIDE/Datasets/ECI Chaos/Distributed Phase 1/finalized/single_node/training/df_anomaly.csv # Define the path to the local file for training
+
+Mode:
+  Training: True
+  Validate: False
+  Detect: False
+
+Filter:
+  DColumns:  # Which columns to delete
+    - target
+  Fillna: True # fill none values with 0
+  Dropna: True # delete columns woth none values
+
+Augmentation:
+  Scaler: # if not used set to false
+    StandardScaler:   # All scalers from scikitlearn
+      copy: True
+#      with_mean: True
+#      with_std: True
+
+# User defined clustering custom
+
+#Training:
+#  Type: clustering
+#  Method: isoforest
+#  Export: clustering_1
+#  MethodSettings:
+#    n_estimators: 10
+#    max_samples: 10
+#    contamination: 0.1
+#    verbose: True
+#    bootstrap: True
+
+#Training:
+#  Type: clustering
+#  Method: !!python/object/apply:edeuser.user_methods.user_iso
+#    kwds:
+#      n_estimators: 100
+#      contamination: 0.1
+#      max_features: 10
+#      n_jobs: -1
+#      warm_start: False
+#      random_state: 45
+#      bootstrap: True
+#      verbose: True
+#      max_samples: 100
+#  Export: clustering_y2
+
+Training:
+  Type: clustering
+  Method: !!python/object/apply:edescikit.edepyod.ede_iso
+    kwds:
+      contamination: 0.1
+      n_estimators: 100
+      max_features: 1.0
+      bootstrap: True
+      n_jobs: -1
+      verbose: 1
+  Export: cluster_y2_v2
+
+#Training:
+#  Type: clustering
+#  Method: !!python/object/apply:edescikit.edepyod.VAE_EDE
+#    kwd:
+#      contaminaton: 0.1
+#      verbose: 1
+#  Export: cluster_vae_y2
+
+Detect:
+  Method: IsolationForest
+  Type: clustering
+  Load: clustering_2
+  Scaler: StandardScaler  # Same as for training
+
+
+
+Misc:
+  heap: 512m
+  checkpoint: True
+  delay: 10s
+  interval: 30m
+  resetindex: False
+  point: False

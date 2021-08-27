@@ -1006,9 +1006,14 @@ class SciClassification:
                 self.__confusion_matrx(ytest, ypred_test, definitions, model_name=model_name, fold=fold)
 
                 # Feature Importance, if applicable
-                self.__feature_imp(model, model_name, X, fold)
+                try:
+                    self.__feature_imp(model, model_name, X, fold)
+                except Exception:
+                    logger.debug('[{}] : [DEBUG] Feature Importance not computable for {}'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), model_name))
                 fold += 1
         return cv_results
+
 
     def __feature_imp(self,
                       model,

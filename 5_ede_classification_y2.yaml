@@ -1,0 +1,166 @@
+Connector:
+#  PREndpoint: 194.102.62.155 #hal720m.sage.ieat.ro
+  Dask:
+    SchedulerEndpoint: local # if not local add DASK schedueler endpoint
+    Scale: 3 # Number of workers if local otherwise ignored
+    SchedulerPort: 8787 # This is the default point
+    EnforceCheck: False # Irrelevant for local
+  MPort: 9200 # Moitoring port
+  KafkaEndpoint: 10.9.8.136
+  KafkaPort: 9092
+  KafkaTopic: edetopic
+#  Query: { "query": 'node_disk_written_bytes_total[5m]'} # Query for specific metrics
+  Query: {"query": '{__name__=~"node.+"}[1m]'}
+  MetricsInterval: "1m" # Metrics datapoint interval definition
+  QSize: 0
+  Index: time
+  QDelay: "10s" # Polling period for metrics fetching
+  Local: /Users/Gabriel/Dropbox/Research/ASPIDE/Datasets/ECI Chaos/Distributed Phase 1/finalized/single_node/training/df_anomaly.csv # Define the path to the local file for training
+
+Mode:
+  Training: True
+  Validate: False
+  Detect: False
+
+
+Filter:
+  Fillna: True # fill none values with 0
+  Dropna: True # delete columns woth none values
+
+Augmentation:
+  Scaler: # if not used set to false
+    StandardScaler:   # All scalers from scikitlearn
+      copy: True
+
+#  Classification example
+#Training:
+#  Type: classification
+#  Method: !!python/object/apply:sklearn.ensemble.AdaBoostClassifier  # DONT forger ../apply
+#    _sklearn_version: '0.24.2'
+#    n_estimators: 100
+#    learning_rate: 1
+#    algorithm: SAMME.R
+#  Target: target
+#  Export: classification_2
+#  ValidRatio: 0.2
+#  TrainScore: True # expensive if set to false only test scores are computed
+#  ReturnEstimators: True
+#  CV:
+#    Type: StratifiedKFold  # user defined all from sklearn, if int than used standard
+#    Params:
+#      n_splits: 5
+#      shuffle: True
+#      random_state: 5
+#  Scorers:
+#    Scorer_list:
+#      - Scorer:
+#          Scorer_name: F1_weighted
+#          skScorer: f1_weighted
+#      - Scorer:
+#          Scorer_name: Jaccard_Index
+#          skScorer: jaccard_weighted # changes in scoring sklearn, for multiclass add suffix micro, weighted or sample
+#      - Scorer:
+#          Scorer_name: AUC
+#          skScorer: roc_auc_ovr_weighted
+#    User_scorer1: balanced_accuracy_score # key is user defined, can be changed same as Scorer_name
+#    Verbose: 0
+
+#Training:
+#  Type: classification
+#  Method: !!python/object/apply:sklearn.ensemble.RandomForestClassifier  # DONT forger ../apply
+#    _sklearn_version: '0.24.2'
+#    n_estimators: 100
+#    criterion: "gini"
+#    min_sample_split: 2
+#    min_sample_leaf: 1
+#    max_features: "log2"
+#    n_jobs: -1
+#    random_state: 42
+#    verbose: 1
+#  Target: target
+#  Export: classification_y2
+#  ValidRatio: 0.2
+#  TrainScore: True # expensive if set to false only test scores are computed
+#  ReturnEstimators: True
+#  CV:
+#    Type: StratifiedKFold  # user defined all from sklearn, if int than used standard
+#    Params:
+#      n_splits: 5
+#      shuffle: True
+#      random_state: 5
+#  Scorers:
+#    Scorer_list:
+#      - Scorer:
+#          Scorer_name: F1_weighted
+#          skScorer: f1_weighted
+#      - Scorer:
+#          Scorer_name: Jaccard_Index
+#          skScorer: jaccard_weighted # changes in scoring sklearn, for multiclass add suffix micro, weighted or sample
+#      - Scorer:
+#          Scorer_name: AUC
+#          skScorer: roc_auc_ovr_weighted
+#    User_scorer1: balanced_accuracy_score # key is user defined, can be changed same as Scorer_name
+#  Verbose: 0
+
+Training:
+  Type: classification
+  Method: !!python/object/apply:xgboost.XGBClassifier  # DONT forger ../apply
+    kwds:
+      n_estimators: 100
+      max_depth: 4
+      learning_rate: 0.01
+      subsample: 0.2
+      min_child_wight: 6
+      objective: multi:softmax
+      n_jobs: -1
+      random_state: 42
+      verbosity: 1
+  Target: target
+  Export: classification_y2
+  ValidRatio: 0.2
+  TrainScore: True # expensive if set to false only test scores are computed
+  ReturnEstimators: True
+  CV:
+    Type: StratifiedKFold  # user defined all from sklearn, if int than used standard
+    Params:
+      n_splits: 5
+      shuffle: True
+      random_state: 5
+  Scorers:
+    Scorer_list:
+      - Scorer:
+          Scorer_name: F1_weighted
+          skScorer: f1_weighted
+      - Scorer:
+          Scorer_name: Jaccard_Index
+          skScorer: jaccard_weighted # changes in scoring sklearn, for multiclass add suffix micro, weighted or sample
+      - Scorer:
+          Scorer_name: AUC
+          skScorer: roc_auc_ovr_weighted
+    User_scorer1: balanced_accuracy_score # key is user defined, can be changed same as Scorer_name
+  Verbose: 1
+
+
+Detect:
+  Method: AdaBoostClassifier
+  Type: classification
+  Load: classification_1_0
+  Scaler: StandardScaler # Same as for training
+
+
+
+# Not yet Implemented
+#Validation:
+#  DataSource: /path/to/data # if datasource is not defined use default from data connector, last column is ground truth named "Target"
+#  Treashold: 0.2 #  improvement percent
+#  Models:
+#    - m1
+#    - m2
+
+Misc:
+  heap: 512m
+  checkpoint: True
+  delay: 15s
+  interval: 30m
+  resetindex: False
+  point: False

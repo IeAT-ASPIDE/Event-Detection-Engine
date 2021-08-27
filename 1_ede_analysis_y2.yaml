@@ -15,6 +15,7 @@ Connector:
   QSize: 0
   Index: time
   QDelay: "10s" # Polling period for metrics fetching
+  Local: /Users/Gabriel/Dropbox/Research/ASPIDE/Datasets/ECI Chaos/Distributed Phase 1/finalized/single_node/training/df_anomaly.csv # Define the path to the local file for training
 
 Mode:
   Training: True
@@ -38,6 +39,7 @@ Mode:
 #    - node_boot_time_seconds_10.211.55.103:9100
 #  Fillna: True # fill none values with 0
 #  Dropna: True # delete columns with None values
+#  LowVariance: True
 #  DWild:
 #    Regex: 'load' # filter based on wildcard (regex)
 #    Keep: True
@@ -115,9 +117,51 @@ Analysis:
 #         location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
    - Method: !!python/object/apply:edeuser.user_methods.wrapper_improved_pearson
        kwds:
-         name: Test_Clean
+         name: Test_Training
+         dcol:
+           - target
          location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
          show: False
+   - Method: !!python/object/apply:edeuser.user_methods.wrapper_rank2
+       kwds:
+         name: Test_rank
+         dcol:
+           - target
+         location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+         algorithm: spearman
+         show: False
+   - Method: !!python/object/apply:edeuser.user_methods.wrapper_rank1
+       kwds:
+         name: Test_rank1
+         dcol:
+           - target
+         location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+         algorithm: shapiro
+   - Method: !!python/object/apply:edeuser.user_methods.wrapper_pca_plot
+       kwds:
+         name: Test_PCA
+         location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+         projection: 3
+         target: target
+#         show: False
+   - Method: !!python/object/apply:edeuser.user_methods.wrapper_manifold
+       kwds:
+         name: Test_manifold
+         target: target
+         location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+         manifold: tsne
+         n_neighbors: 10
+#   - Method: !!python/object/apply:edeuser.user_methods.wrapper_manifold
+#       kwds:
+#         name: Test_manifold
+#         target: target
+#         location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+#         manifold: hessian
+   - Method: !!python/object/apply:edeuser.user_methods.wrapper_plot_on_features
+       kwds:
+         name: complete_columns
+         target: target
+         location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
 
  Solo: True
 
