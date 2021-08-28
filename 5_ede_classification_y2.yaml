@@ -100,27 +100,30 @@ Training:
           Scorer_name: AUC
           skScorer: roc_auc_ovr_weighted
     User_scorer1: balanced_accuracy_score # key is user defined, can be changed same as Scorer_name
-  LearningCurve:
-    sizes: !!python/object/apply:numpy.core.function_base.linspace
-      kwds:
-        start: 0.3
-        stop: 1.0
-        num: 10
+#  LearningCurve:
+#    sizes: !!python/object/apply:numpy.core.function_base.linspace
+#      kwds:
+#        start: 0.3
+#        stop: 1.0
+#        num: 10
+#    scorer: f1_weighted
+#    n_jobs: 5
+#  ValidationCurve:
+#    param_name: n_estimators
+#    param_range:
+#      - 10
+#      - 20
+#      - 60
+#      - 100
+#      - 200
+#      - 600
+#    scoring: f1_weighted
+#    n_jobs: 8
+#  PrecisionRecallCurve: 1
+#  ROCAUC: 1
+  RFE:
     scorer: f1_weighted
-    n_jobs: 5
-  ValidationCurve:
-    param_name: n_estimators
-    param_range:
-      - 10
-      - 20
-      - 60
-      - 100
-      - 200
-      - 600
-    scoring: f1_weighted
-    n_jobs: 8
-  PrecisionRecallCurve: 1
-  ROCAUC: 1
+    step: 10
   Verbose: 0
 
 #Training:

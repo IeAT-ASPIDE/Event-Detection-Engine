@@ -38,6 +38,7 @@ from sklearn.metrics import make_scorer, SCORERS, get_scorer, classification_rep
 from imblearn.metrics import classification_report_imbalanced
 from yellowbrick.model_selection import LearningCurve, ValidationCurve, RFECV
 from yellowbrick.classifier import PrecisionRecallCurve, ROCAUC
+from yellowbrick.contrib.classifier import DecisionViz
 from yellowbrick.style import set_palette
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -73,6 +74,7 @@ class SciClassification:
                  validationcurve=None,
                  prc=None,
                  rocauc=None,
+                 rfe=None,
                  trainscore=False,
                  scorers=None,
                  returnestimators=False):
@@ -90,6 +92,7 @@ class SciClassification:
         self.validationcurve = validationcurve
         self.prc = prc
         self.rocauc = rocauc
+        self.rfe = rfe
         self.trainscore = trainscore
         self.scorers = scorers
         self.returnestimators = returnestimators
@@ -963,6 +966,19 @@ class SciClassification:
                 self.__validation_curve(classification_method, X, y, cv, model_name=classification_type)
 
             # Recurrent feature elimination
+            try:
+                if self.rfe is not None:
+                    logger.info('[{}] : [INFO] Computing Recursive Feature Elimination for {} of type {} ...'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), self.export,
+                        classification_type))
+                    rfe_model = self.__rfe(classification_method, X, y, cv=cv, model_name=classification_type)
+                    mname = f"RFE_{self.export}"
+                    self.__serializemodel(rfe_model, classification_type, mname)
+            except Exception as inst:
+                logger.warning('[{}] : [WARN] Recursive Feature Elimination is not executable on {} with {} and {}'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'),
+                    classification_type, type(inst), inst.args))
+
 
             # Precision-Recall Curve
             if self.prc is not None:
@@ -982,12 +998,88 @@ class SciClassification:
 
             # DecisionBoundaries Vizualizer
 
+    def __rfe(self,
+              model,
+              X,
+              y,
+              cv,
+              model_name):
+        """
+        Recursive Feature elimination will fit the user defined model and removes the weakest feature
+        until the an optimum combination of features is reached. Features are ranked by coef_ or feature_importance_
+        attribute. Thus methods does not work with methods without these attributes. It utilizes cross-validation
+        as defined by the user in the config yaml.  Saves a report containing the feature mask and a yaml drop list
+        that can be used by the EDE filter.
+
+        The step attribute must be set from the general yaml conf file and represents how many features should be
+        eliminated at every iteration.
+
+        :param model: model instance created from conf yaml parameters
+        :param X: training dataframe
+        :param y: ground truth from dataframe
+        :param cv: type can be int or dictionary describing sklearn compatible type
+        :param model_name: name of the model set by export
+        :return rfe_estimator: best estimator for the given best features
+        """
+        try:
+            scorer = self.rfe['scorer']
+            step = self.rfe['step']
+        except Exception as inst:
+            logger.error('[{}] : [ERROR] Recursive Feature Elimination parameter error with {} and {}'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(inst), inst.args))
+            sys.exit(1)
+
+        viz = RFECV(model, cv=cv, scoring=scorer, step=step)
+        viz.fit(X, y)
+        rfe_report = {}
+        # cv_scores = viz.cv_scores_  # cv scores
+        feature_ranking = viz.ranking_  # feature ranking
+        # viz.rfe_estimator_  # best estimator model
+        feature_mask = viz.support_ # mask of features to be removed
+        rfe_report['Features'] = list(X.columns)
+        rfe_report['Mask'] = feature_mask
+        rfe_report['Ranking'] = feature_ranking
+        df_rfe_report = pd.DataFrame(rfe_report)
+
+        # Save feature to be dropped as yaml so that it can be used by the filter component.
+        drop_list = []
+        for index, row in df_rfe_report.iterrows():
+            if not row['Mask']:
+                drop_list.append(row['Features'])
+        if drop_list:
+            with open(os.path.join(self.modelDir, f"RFE_drop_list.yaml"), 'w')as drop_yaml:
+                yaml.dump(drop_list, drop_yaml, default_flow_style=False)
+            logger.info('[{}] : [INFO] Features eliminated:  {}'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), len(drop_list)))
+
+        # Saving report
+        df_rfe_report.to_csv(os.path.join(self.modelDir, f"RFE_Report_{self.export}_{model_name}.csv"))
+
+        # Saving Visualization
+        rfe_fig = f"Recursive_Feature_Elimination_{self.export}_{model_name}.png"
+        viz.show(outpath=os.path.join(self.modelDir, rfe_fig))
+        plt.close()
+        return viz.rfe_estimator_
+
     def __rocauc_curves(self,
                         model,
                         X,
                         y,
                         definitions,
                         model_name):
+
+        """
+        Receiver Operating Charactersitic/Area Under the Curve plots the tradeoff between
+        clasifier sensitivity and specificity i.e. predictive quality. The steepness of the curve
+        is important as it represents the maximization of the true positive rate while minimising
+        the false positive one.
+
+        :param model: model instance created from conf yaml parameters
+        :param X: training dataframe
+        :param y: ground truth from dataframe
+        :param definitions: Class definitions as defined by tokenization
+        :param model_name: name of the model set by export
+        """
 
         # Split data into training and testing  # todo add customizability
         XTrain, XTest, yTrain, yTest = train_test_split(X, y, test_size=.33, shuffle=True, random_state=42)
