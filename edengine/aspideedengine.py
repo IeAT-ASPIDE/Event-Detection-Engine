@@ -81,6 +81,7 @@ class EDEngine:
         self.learningcurve = settingsDict['LearningCurve']
         self.validationcurve = settingsDict['ValidationCurve']
         self.prc = settingsDict["PrecisionRecallCurve"]
+        self.rocauc = settingsDict["ROCAUC"]
         self.export = settingsDict['export']
         self.detect = settingsDict['detect']
         self.sload = settingsDict['sload']
@@ -785,7 +786,8 @@ class EDEngine:
                                                   trainscore=self.trainscore, scorers=self.scorers,
                                                   returnestimators=self.returnestimators,
                                                   verbose=self.verbosecv, learningcurve=self.learningcurve,
-                                                  validationcurve=self.validationcurve, prc=self.prc)
+                                                  validationcurve=self.validationcurve, prc=self.prc,
+                                                  rocauc=self.rocauc)
                 clf = classede.dask_classifier(settings=self.methodSettings, mname=self.export, X=asudata, y=y,
                                                classification_method=self.trainmethod)
 

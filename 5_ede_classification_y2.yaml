@@ -120,6 +120,7 @@ Training:
     scoring: f1_weighted
     n_jobs: 8
   PrecisionRecallCurve: 1
+  ROCAUC: 1
   Verbose: 0
 
 #Training:

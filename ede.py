@@ -84,6 +84,7 @@ def main(argv,
     settings.LearningCurve = None
     settings.ValidationCurve = None
     settings.PrecisionRecallCurve = None
+    settings.ROCAUC = None
     settings.returnestimators = None
     settings.analysis = None
     settings.validate = None
@@ -612,6 +613,13 @@ def main(argv,
         except Exception:
             pass
 
+    if settings.ROCAUC is None:
+        try:
+            settings.ROCAUC = readCnf['Training']['ROCAUC']
+            logger.info('[{}] : [INFO] Training ROC-AUC Curve set'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+        except Exception:
+            pass
 
     if settings.returnestimators is None:
         try:

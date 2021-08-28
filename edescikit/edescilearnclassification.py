@@ -72,6 +72,7 @@ class SciClassification:
                  learningcurve=None,
                  validationcurve=None,
                  prc=None,
+                 rocauc=None,
                  trainscore=False,
                  scorers=None,
                  returnestimators=False):
@@ -88,6 +89,7 @@ class SciClassification:
         self.learningcurve = learningcurve
         self.validationcurve = validationcurve
         self.prc = prc
+        self.rocauc = rocauc
         self.trainscore = trainscore
         self.scorers = scorers
         self.returnestimators = returnestimators
@@ -971,7 +973,32 @@ class SciClassification:
                                               model_name=classification_type)
             # ROC-AUC
 
+            if self.rocauc is not None:
+                logger.info('[{}] : [INFO] Computing ROC Curves for {} of type {} ...'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), self.export,
+                    classification_type))
+                self.__rocauc_curves(classification_method, X, y, definitions=y_definitions,
+                                     model_name=classification_type)
+
             # DecisionBoundaries Vizualizer
+
+    def __rocauc_curves(self,
+                        model,
+                        X,
+                        y,
+                        definitions,
+                        model_name):
+
+        # Split data into training and testing  # todo add customizability
+        XTrain, XTest, yTrain, yTest = train_test_split(X, y, test_size=.33, shuffle=True, random_state=42)
+
+        # Compute ROC AUC
+        viz = ROCAUC(model, classes=definitions)
+        viz.fit(XTrain, yTrain)
+        viz.score(XTest, yTest)
+        ROCAUC_curve_fig = f"ROCAUC_Curve_{self.export}_{model_name}.png"
+        viz.show(outpath=os.path.join(self.modelDir, ROCAUC_curve_fig))
+        plt.close()
 
     def __precision_recall_curve(self,
                                  model,
