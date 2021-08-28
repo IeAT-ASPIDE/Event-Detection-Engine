@@ -121,9 +121,10 @@ Training:
 #    n_jobs: 8
 #  PrecisionRecallCurve: 1
 #  ROCAUC: 1
-  RFE:
-    scorer: f1_weighted
-    step: 10
+#  RFE:
+#    scorer: f1_weighted
+#    step: 10
+  DecisionBoundary: 1
   Verbose: 0
 
 #Training:

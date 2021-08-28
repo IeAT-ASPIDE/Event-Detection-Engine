@@ -86,6 +86,7 @@ def main(argv,
     settings.PrecisionRecallCurve = None
     settings.ROCAUC = None
     settings.RFE = None
+    settings.DecisionBoundary = None
     settings.returnestimators = None
     settings.analysis = None
     settings.validate = None
@@ -626,6 +627,14 @@ def main(argv,
         try:
             settings.RFE = readCnf['Training']['RFE']
             logger.info('[{}] : [INFO] Training Recursive Feature Elimination set'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+        except Exception:
+            pass
+
+    if settings.DecisionBoundary is None:
+        try:
+            settings.DecisionBoundary = readCnf['Training']['DecisionBoundary']
+            logger.info('[{}] : [INFO] Training Decision Boundary set'.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
         except Exception:
             pass

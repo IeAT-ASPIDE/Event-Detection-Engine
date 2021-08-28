@@ -30,6 +30,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.neural_network import MLPClassifier
 from sklearn import model_selection
+from sklearn.decomposition import PCA
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
@@ -75,6 +76,7 @@ class SciClassification:
                  prc=None,
                  rocauc=None,
                  rfe=None,
+                 dboundary = None,
                  trainscore=False,
                  scorers=None,
                  returnestimators=False):
@@ -93,6 +95,7 @@ class SciClassification:
         self.prc = prc
         self.rocauc = rocauc
         self.rfe = rfe
+        self.dboundary = dboundary
         self.trainscore = trainscore
         self.scorers = scorers
         self.returnestimators = returnestimators
@@ -979,7 +982,6 @@ class SciClassification:
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'),
                     classification_type, type(inst), inst.args))
 
-
             # Precision-Recall Curve
             if self.prc is not None:
                 logger.info('[{}] : [INFO] Computing Precision Recall Curve for {} of type {} ...'.format(
@@ -988,7 +990,6 @@ class SciClassification:
                 self.__precision_recall_curve(classification_method, X, y, definitions=y_definitions,
                                               model_name=classification_type)
             # ROC-AUC
-
             if self.rocauc is not None:
                 logger.info('[{}] : [INFO] Computing ROC Curves for {} of type {} ...'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), self.export,
@@ -997,6 +998,48 @@ class SciClassification:
                                      model_name=classification_type)
 
             # DecisionBoundaries Vizualizer
+            if self.dboundary is not None:
+                logger.info('[{}] : [INFO] Computing Decision Boundary for {} of type {} ...'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), self.export,
+                    classification_type))
+                self.__decision_boundary(classification_method, X, y, definitions=y_definitions,
+                                         model_name=classification_type )
+
+    def __decision_boundary(self,
+                            model,
+                            X,
+                            y,
+                            definitions,
+                            model_name):
+
+        """
+        Decision Boundary is a bivariate data visualization algorithm which plots the boundaries between
+        each class. It operates on a limited set of features. Complex boundaries are to be expected
+        when dealing with initially high dimensional data and/or large number of possible classes.
+
+        :param model: model instance created from conf yaml parameters
+        :param X: training dataframe
+        :param y: ground truth from dataframe
+        :param definitions: Class definitions as defined by tokenization
+        :param model_name: name of the model set by export
+        """
+        pca_transformer = PCA(n_components=2)
+        X_tranformed = pca_transformer.fit_transform(X)
+
+        # Split data into training and testing  # todo add customizability
+        XTrain, XTest, yTrain, yTest = train_test_split(X_tranformed, y, test_size=.33, shuffle=True, random_state=42)
+
+        viz = DecisionViz(
+            model,
+            title=f"Decision Boundary {self.export} {model_name}",
+            features=['PC1', 'PC2'], classes=definitions
+        )
+
+        viz.fit(XTrain, yTrain)
+        viz.draw(XTest, yTest)
+        db_fig = f"Decision Boundary_{self.export}_{model_name}.png"
+        viz.show(outpath=os.path.join(self.modelDir, db_fig))
+        plt.close()
 
     def __rfe(self,
               model,
