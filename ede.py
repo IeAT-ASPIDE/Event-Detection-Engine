@@ -83,6 +83,7 @@ def main(argv,
     settings.verbosecv = None
     settings.LearningCurve = None
     settings.ValidationCurve = None
+    settings.PrecisionRecallCurve = None
     settings.returnestimators = None
     settings.analysis = None
     settings.validate = None
@@ -602,6 +603,15 @@ def main(argv,
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
         except Exception:
             pass
+
+    if settings.PrecisionRecallCurve is None:
+        try:
+            settings.PrecisionRecallCurve = readCnf['Training']['PrecisionRecallCurve']
+            logger.info('[{}] : [INFO] Training Precision Recall Curve set'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+        except Exception:
+            pass
+
 
     if settings.returnestimators is None:
         try:

@@ -119,6 +119,7 @@ Training:
       - 600
     scoring: f1_weighted
     n_jobs: 8
+  PrecisionRecallCurve: 1
   Verbose: 0
 
 #Training:

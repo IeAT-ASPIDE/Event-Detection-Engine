@@ -353,7 +353,7 @@ def wrapper_manifold(name,
         plot_name = f"Manifold_{manifold}_{name}.png"
         vizualisation.show(outpath=os.path.join(location, plot_name))
         plt.close()
-        return 0
+
     return manifold_embeding
 
 
