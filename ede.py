@@ -359,7 +359,7 @@ def main(argv,
             logger.info('[{}] : [INFO] Local datasource set to default'.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
             settings['local'] = None
-            if settings['esendpoint'] is None and settings['prendpoint']:
+            if settings['esendpoint'] is None and settings['prendpoint'] is None:
                 logger.error('[{}] : [ERROR] No valid datasource set! Exiting ...'.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
                 sys.exit(1)
