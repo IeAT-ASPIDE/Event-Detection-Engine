@@ -158,12 +158,12 @@ def cfilterparse(filter):
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), inst.args))
             sys.exit(0)
         if checkFile(drop_file_loc):
-            with open(drop_file_loc, 'r') as stream:
+            with open(drop_file_loc) as stream:
                 try:
                     filter_list = yaml.safe_load(stream)
                 except yaml.YAMLError as exc:
-                    logger.error('[{}] : [ERROR] YAML DColumns file parse error'.format(
-                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+                    logger.error('[{}] : [ERROR] YAML DColumns file parse error with {} and {}'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(exc), exc.args))
                     sys.exit(1)
                 # print(filter_list)
                 return filter_list
