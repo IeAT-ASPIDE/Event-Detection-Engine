@@ -291,7 +291,8 @@ class SciCluster:
     def dask_detect(self,
                     method,
                     model,
-                    data
+                    data,
+                    anomaly_label=-1 # Todo make anomaly label user definable
                     ):
         smodel = self.__loadClusterModel(method, model)
         anomaliesList = []
@@ -315,7 +316,7 @@ class SciCluster:
                 logger.warning('[{}] : [WARN] DataFrame is empty with shape {} '.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), str(data.shape)))
         if type(dpredict) is not int:
-            anomalyArray = np.argwhere(dpredict == -1)
+            anomalyArray = np.argwhere(dpredict == anomaly_label)
             for an in anomalyArray:
                 anomalies = {}
                 anomalies['utc'] = int(data.iloc[an[0]].name)

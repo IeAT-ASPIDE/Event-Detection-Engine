@@ -247,8 +247,8 @@ class SciClassification:
                 logger.warning('[{}] : [WARN] DataFrame is empty with shape {} '.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), str(data.shape)))
         if type(dpredict) is not int:
-            if normal_label is None:  # Todo make this user definable
-                nl = 1
+            if normal_label is None:  # Todo make normal_label  user definable
+                nl = 0
             else:
                 nl = normal_label
             anomalyArray = np.argwhere(dpredict != nl)
@@ -260,6 +260,7 @@ class SciClassification:
                 anomaliesList.append(anomalies)
         anomaliesDict = {}
         anomaliesDict['anomalies'] = anomaliesList
+        # print(smodel)
         logger.info('[{}] : [INFO] Detected {} anomalies with model {} using method {} '.format(
             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), len(anomaliesList), model,
             str(smodel).split('(')[0]))

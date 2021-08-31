@@ -1,20 +1,19 @@
 Connector:
-  PREndpoint: 194.102.62.155 #hal720m.sage.ieat.ro
+  PREndpoint: 194.102.62.155 # hal720m.sage.ieat.ro
   Dask:
-    SchedulerEndpoint: local
-    Scale: 3
-    SchedulerPort: 8787
-    EnforceCheck: False
+    SchedulerEndpoint: local # if not local add DASK schedueler endpoint
+    Scale: 3 # Number of workers if local otherwise ignored
+    SchedulerPort: 8787 # This is the default point
+    EnforceCheck: False # Irrelevant for local
   MPort: 9200 # Moitoring port
   KafkaEndpoint: 10.9.8.136
   KafkaPort: 9092
   KafkaTopic: edetopic
-#  Query: { "query": 'node_disk_written_bytes_total[5m]'}
   Query: {"query": '{__name__=~"node.+"}[1m]'}
   MetricsInterval: "1m" # Metrics datapoint interval definition
   QSize: 0
   Index: time
-  QDelay: 10s # Polling period for metrics fetching
+  QDelay: "10s" # Polling period for metrics fetching
 #  Local: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/data/demo_data.csv # Define the path to the local file for training
 
 Mode:
@@ -22,21 +21,14 @@ Mode:
   Validate: False
   Detect: True
 
+
 Filter:
-#  Columns:   # Which columns remain
-#    - "col1"
-#    - "col2"
-#    - "col4"
-#  Rows:
-#    ld: 145607979
-#    gd: 145607979
 #  DColumns:  # Which columns to delete
 #    - node_boot_time_seconds_10.211.55.101:9100
 #    - node_boot_time_seconds_10.211.55.102:9100
 #    - node_boot_time_seconds_10.211.55.103:9100
   Fillna: True # fill none values with 0
   Dropna: True # delete columns woth none values
-#  LowVariance: True
   DWild:
     Regex: '10.251.0.114' # filter based on wildcard (regex)
     Keep: True
@@ -49,7 +41,7 @@ Augmentation:
     StandardScaler:   # All scalers from scikitlearn
       copy: True
       with_mean: True
-      with_std: True
+      with_std: true
 #  Operations:
 #    STD:
 #      - cpu_load1:
@@ -84,34 +76,51 @@ Augmentation:
 #      kwds:
 #        columns: !!python/tuple [node_load15_10.211.55.101:9100, node_load15_10.211.55.102:9100]
 #        column_name: sum_load15
-#  Categorical:
-#    - col1
-#    - col2
-#    OH: True
 
-# Clustering example
+#  Classification example
 Training:
-  Type: clustering
-  Method: isoforest
-  Export: clustering_1
-  MethodSettings:
-    n_estimators: 10
-    max_samples: 10
-    contamination: 0.1
-    verbose: True
-    bootstrap: True
+  Type: classification
+  Method: !!python/object/apply:sklearn.ensemble.AdaBoostClassifier  # DONT forger ../apply
+    _sklearn_version: '0.22.1'
+    n_estimators: 100
+    learning_rate: 1
+    algorithm: SAMME.R
+  Target: target
+  Export: classification_2
+  ValidRatio: 0.2
+  TrainScore: True # expensive if set to false only test scores are computed
+  ReturnEstimators: True
+  CV:
+    Type: StratifiedKFold  # user defined all from sklearn, if int than used standard
+    Params:
+      n_splits: 5
+      shuffle: True
+      random_state: 5
+  Scorers:
+    Scorer_list:
+      - Scorer:
+          Scorer_name: AUC
+          skScorer: roc_auc
+      - Scorer:
+          Scorer_name: Jaccard_Index
+          skScorer: jaccard
+      - Scorer:
+          Scorer_name: Balanced_Acc
+          skScorer: balanced_accuracy
+    User_scorer1: f1_score # key is user defined, can be changed same as Scorer_name
 
-Detect:   # Method loading has the form <Method>_<Load>.pkl
-  Method: IsolationForest
-  Type: clustering
-  Load: clustering_2
-  Scaler: StandardScaler  # Same as for training
+Detect:
+  Method: RandomForestClassifier
+  Type: classification
+  Load: classification_y2_0
+  Scaler: StandardScaler # Same as for training
+
 
 
 Misc:
   heap: 512m
   checkpoint: True
-  delay: 10s
+  delay: 15s
   interval: 30m
   resetindex: False
   point: False
