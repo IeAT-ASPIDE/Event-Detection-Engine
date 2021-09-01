@@ -97,7 +97,7 @@ class SciClassification:
         self.rocauc = rocauc
         self.rfe = rfe
         self.dboundary = dboundary
-        self.pred_analysis = False # todo you are here
+        self.pred_analysis = True # todo you are here
         self.trainscore = trainscore
         self.scorers = scorers
         self.returnestimators = returnestimators
@@ -254,6 +254,11 @@ class SciClassification:
             else:
                 nl = normal_label
             anomalyArray = np.argwhere(dpredict != nl)
+            # print(type(dpredict))
+            # print(data.shape)
+            # print(data.shape)
+            # print(data.columns)
+
             for an in anomalyArray:
                 anomalies = {}
                 anomalies['utc'] = int(data.iloc[an[0]].name)
@@ -262,8 +267,10 @@ class SciClassification:
                 anomaliesList.append(anomalies)
         anomaliesDict = {}
         anomaliesDict['anomalies'] = anomaliesList
-        if self.pred_analysis:
-            anomaliesDict['shap_analysis'] = self.__shap_analysis(model, data)
+        if self.pred_analysis and anomaliesList:
+            df_anomaly_data = data.copy(deep=True)
+            df_anomaly_data['target'] = dpredict
+            anomaliesDict['shap_analysis'] = self.__shap_analysis(smodel, df_anomaly_data, normal_value=nl)
         # print(smodel)
         logger.info('[{}] : [INFO] Detected {} anomalies with model {} using method {} '.format(
             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), len(anomaliesList), model,
@@ -272,7 +279,8 @@ class SciClassification:
 
     def __shap_analysis(self,
                         model,
-                        data):
+                        data,
+                        normal_value):
         # todo use non tokenized labels for data
         """
         Shap analysis of incoming data
@@ -283,8 +291,15 @@ class SciClassification:
         """
         logger.info('[%s] : [INFO] Executing classification prediction analysis ...',
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
+
+        data_filtered = data.loc[data['target'] != normal_value]
+        data_filtered.drop(['target'], inplace=True, axis=1)
+        # print("++++++")
+        # print(data.shape)
+        # print(data_filtered.shape)
+
         explainer = shap.TreeExplainer(model)
-        shap_values = explainer.shap_values(data)
+        shap_values = explainer.shap_values(data_filtered)
 
         try:
             labels = model.classes_
