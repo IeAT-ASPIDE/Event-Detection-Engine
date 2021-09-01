@@ -49,6 +49,7 @@ import pickle as pickle
 from util import str2Bool
 import glob
 from util import ut2hum
+import shap
 import itertools
 
 pd.options.mode.chained_assignment = None
@@ -96,6 +97,7 @@ class SciClassification:
         self.rocauc = rocauc
         self.rfe = rfe
         self.dboundary = dboundary
+        self.pred_analysis = False # todo you are here
         self.trainscore = trainscore
         self.scorers = scorers
         self.returnestimators = returnestimators
@@ -260,11 +262,70 @@ class SciClassification:
                 anomaliesList.append(anomalies)
         anomaliesDict = {}
         anomaliesDict['anomalies'] = anomaliesList
+        if self.pred_analysis:
+            anomaliesDict['shap_analysis'] = self.__shap_analysis(model, data)
         # print(smodel)
         logger.info('[{}] : [INFO] Detected {} anomalies with model {} using method {} '.format(
             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), len(anomaliesList), model,
             str(smodel).split('(')[0]))
         return anomaliesDict
+
+    def __shap_analysis(self,
+                        model,
+                        data):
+        # todo use non tokenized labels for data
+        """
+        Shap analysis of incoming data
+
+        :param model: Predictive model to be analyzed
+        :param data: data for analysis
+        :return: feature importance
+        """
+        logger.info('[%s] : [INFO] Executing classification prediction analysis ...',
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(data)
+
+        try:
+            labels = model.classes_
+        except Exception as inst:
+            logger.error('[%s] : [ERROR] Prediction analysis failed with {} and {}',
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(inst), inst.args)
+            return 0
+
+        feature_imp = self.__shap_feature_importance(shap_values=shap_values,
+                                                     data=data,
+                                                     label=labels)
+
+        return feature_imp
+
+    def __shap_feature_importance(self,
+                                shap_values,
+                                data,
+                                label):
+        """
+        Extracts feature importance from shapely values.
+
+        :param shap_values: shapely values
+        :param data: dataframe to be analysied
+        :param label: labels to be used, as extracted from predictive model
+        :return: dictionary containing feature importance for each label separately
+        """
+        feature_importance_d = {}
+        if isinstance(label, list) or isinstance(label, np.ndarray):
+            for l in label:
+                feature_importance = pd.DataFrame(list(zip(data.columns.tolist(), shap_values[l].sum(0))),
+                                                  columns=['feature_name', 'feature_importance_vals'])
+                feature_importance = feature_importance.iloc[
+                    (-np.abs(feature_importance['feature_importance_vals'].values)).argsort()]
+                feature_importance_d[l] = feature_importance.to_dict()
+        else:
+            feature_importance = pd.DataFrame(list(zip(data.columns.tolist(), shap_values[label].sum(0))),
+                                              columns=['feature_name', 'feature_importance_vals'])
+            feature_importance = feature_importance.iloc[
+                (-np.abs(feature_importance['feature_importance_vals'].values)).argsort()]
+            feature_importance_d[label] = feature_importance.to_dict()
+        return feature_importance_d
 
     def score(self, model, X, y):
         return model.score(X, y)
