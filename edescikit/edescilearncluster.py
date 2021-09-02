@@ -369,10 +369,11 @@ class SciCluster:
         logger.debug('[{}] : [DEBUG] Predicted Anomaly Array {}'.format(
             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), predictions))
         fname = str(clf).split('(')[0]
+        self.__serializemodel(clf, fname, mname)
         self.__plot_feature_sep(data, predictions, method=fname, mname=mname, anomaly_label=anomaly_marker,
                                 normal_label=normal_marker)
         self.__decision_boundary(clf, data, method=fname, mname=mname,anomaly_label=anomaly_marker)
-        self.__serializemodel(clf, fname, mname)
+
         return clf
 
     def __appendPredictions(self, method, mname, data, pred):
