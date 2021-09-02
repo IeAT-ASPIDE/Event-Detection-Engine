@@ -114,6 +114,7 @@ Detect:
   Type: classification
   Load: classification_y2_0
   Scaler: StandardScaler # Same as for training
+  Analysis: False # Start Shapely value based analysis
 
 
 

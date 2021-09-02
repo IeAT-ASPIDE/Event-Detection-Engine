@@ -77,7 +77,8 @@ class SciClassification:
                  prc=None,
                  rocauc=None,
                  rfe=None,
-                 dboundary = None,
+                 dboundary=None,
+                 pred_analysis=False,
                  trainscore=False,
                  scorers=None,
                  returnestimators=False):
@@ -97,7 +98,7 @@ class SciClassification:
         self.rocauc = rocauc
         self.rfe = rfe
         self.dboundary = dboundary
-        self.pred_analysis = True # todo you are here
+        self.pred_analysis = pred_analysis # todo you are here
         self.trainscore = trainscore
         self.scorers = scorers
         self.returnestimators = returnestimators
@@ -229,6 +230,8 @@ class SciClassification:
                     normal_label=None):
         smodel = self.__loadClassificationModel(method=method, model=model)
         anomaliesList = []
+        nl = 0
+        explainer = 0
         if not smodel:
             dpredict = 0
         else:
@@ -248,30 +251,35 @@ class SciClassification:
                 dpredict = 0
                 logger.warning('[{}] : [WARN] DataFrame is empty with shape {} '.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), str(data.shape)))
+        anomaliesDict = {}
         if type(dpredict) is not int:
             if normal_label is None:  # Todo make normal_label  user definable
                 nl = 0
             else:
                 nl = normal_label
-            anomalyArray = np.argwhere(dpredict != nl)
-            # print(type(dpredict))
-            # print(data.shape)
-            # print(data.shape)
-            # print(data.columns)
-
+            anomalyArray = np.argwhere(dpredict != nl)  # Pandas bug where np.argwhere not working on dataframes
+            if self.pred_analysis and anomalyArray.shape[0]:
+                df_anomaly_data = data.copy(deep=True)  # copy for second filter using pandas
+                df_anomaly_data['target'] = dpredict
+                anomaliesDict['complete_shap_analysis'], explainer, shap_values = self.__shap_analysis(smodel,
+                                                                                                       df_anomaly_data,
+                                                                                                       normal_value=nl)
+            count = 0 # todo merge filtering of dpred detection; related to np.argwhere bug for pandas and __shap_analysis data refiltering
             for an in anomalyArray:
                 anomalies = {}
                 anomalies['utc'] = int(data.iloc[an[0]].name)
                 anomalies['hutc'] = ut2hum(int(data.iloc[an[0]].name))
                 anomalies['type'] = dpredict[an[0]]
+                if explainer:
+                    anomalies['analysis'] = self.__shap_values_processing(explainer=explainer,
+                                                                          shap_values=shap_values,
+                                                                          label=dpredict[an[0]],
+                                                                          feature_names=data.columns,
+                                                                          instance=count)
                 anomaliesList.append(anomalies)
-        anomaliesDict = {}
+                count += 1
         anomaliesDict['anomalies'] = anomaliesList
-        if self.pred_analysis and anomaliesList:
-            df_anomaly_data = data.copy(deep=True)
-            df_anomaly_data['target'] = dpredict
-            anomaliesDict['shap_analysis'] = self.__shap_analysis(smodel, df_anomaly_data, normal_value=nl)
-        # print(smodel)
+
         logger.info('[{}] : [INFO] Detected {} anomalies with model {} using method {} '.format(
             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), len(anomaliesList), model,
             str(smodel).split('(')[0]))
@@ -287,6 +295,7 @@ class SciClassification:
 
         :param model: Predictive model to be analyzed
         :param data: data for analysis
+        :param normal_value: denotes the normal (majority) class label
         :return: feature importance
         """
         logger.info('[%s] : [INFO] Executing classification prediction analysis ...',
@@ -294,9 +303,6 @@ class SciClassification:
 
         data_filtered = data.loc[data['target'] != normal_value]
         data_filtered.drop(['target'], inplace=True, axis=1)
-        # print("++++++")
-        # print(data.shape)
-        # print(data_filtered.shape)
 
         explainer = shap.TreeExplainer(model)
         shap_values = explainer.shap_values(data_filtered)
@@ -311,8 +317,33 @@ class SciClassification:
         feature_imp = self.__shap_feature_importance(shap_values=shap_values,
                                                      data=data,
                                                      label=labels)
+        return feature_imp, explainer, shap_values
 
-        return feature_imp
+    def __shap_values_processing(self,
+                                 explainer,
+                                 shap_values,
+                                 feature_names,
+                                 label,
+                                 instance):
+        """
+        Used to export data as used by shap.force_plot on a per detection basis
+
+        :param explainer: Shape explainer object
+        :param shap_values: shapely values
+        :param feature_names: name of features from dataset
+        :param label: label after detection
+        :param instance: instance number as used in df.iloc
+        :return: shap_values on a per detection instance basis
+        """
+        try:
+            shap_values_d = {}
+            shap_values_d['shap_values'] = dict(zip(feature_names, shap_values[label][instance]))
+            shap_values_d['expected_value'] = explainer.expected_value[label]
+        except Exception as inst:
+            logger.error(f"{type(inst), inst.args}")
+            sys.exit()
+
+        return shap_values_d
 
     def __shap_feature_importance(self,
                                 shap_values,

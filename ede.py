@@ -87,6 +87,7 @@ def main(argv,
     settings.ROCAUC = None
     settings.RFE = None
     settings.DecisionBoundary = None
+    settings.PredAnalysis = None
     settings.returnestimators = None
     settings.analysis = None
     settings.validate = None
@@ -443,6 +444,14 @@ def main(argv,
     else:
         logger.info('[%s] : [INFO] Detect Type is set to %s from command line',
                             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings["detecttype"])
+
+    if settings['PredAnalysis'] is None:
+        try:
+            settings['PredAnalysis'] = readCnf['Detect']['Analysis']
+            logger.info('[{}] : [INFO] Detect Analysis is set to {} from conf'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings["PredAnalysis"]))
+        except Exception:
+            settings['PredAnalysis'] = False
 
     if settings["trainMethod"] is None:
         try:

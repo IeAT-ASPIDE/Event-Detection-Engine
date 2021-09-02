@@ -84,6 +84,7 @@ class EDEngine:
         self.rocauc = settingsDict["ROCAUC"]
         self.rfe = settingsDict["RFE"]
         self.dboundary = settingsDict["DecisionBoundary"]
+        self.pred_analysis = settingsDict['PredAnalysis']
         self.export = settingsDict['export']
         self.detect = settingsDict['detect']
         self.sload = settingsDict['sload']
@@ -1263,7 +1264,8 @@ class EDEngine:
                                                       training=self.trainingSet, validation=self.validationSet,
                                                       validratio=self.validratio, compare=self.compare, cv=self.cv,
                                                       trainscore=self.trainscore, scorers=self.scorers,
-                                                      returnestimators=self.returnestimators)
+                                                      returnestimators=self.returnestimators,
+                                                      pred_analysis=self.pred_analysis)
                     anomalies = classede.dask_detect(self.detectmethod, self.load, data=asudata)
                     if not anomalies['anomalies']:
                         logger.info('[{}] : [INFO] No anomalies detected with {}'.format(
