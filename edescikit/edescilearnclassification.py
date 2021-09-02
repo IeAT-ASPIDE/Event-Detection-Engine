@@ -98,7 +98,7 @@ class SciClassification:
         self.rocauc = rocauc
         self.rfe = rfe
         self.dboundary = dboundary
-        self.pred_analysis = pred_analysis # todo you are here
+        self.pred_analysis = pred_analysis
         self.trainscore = trainscore
         self.scorers = scorers
         self.returnestimators = returnestimators
@@ -335,14 +335,13 @@ class SciClassification:
         :param instance: instance number as used in df.iloc
         :return: shap_values on a per detection instance basis
         """
+        shap_values_d = {}
         try:
-            shap_values_d = {}
             shap_values_d['shap_values'] = dict(zip(feature_names, shap_values[label][instance]))
             shap_values_d['expected_value'] = explainer.expected_value[label]
         except Exception as inst:
-            logger.error(f"{type(inst), inst.args}")
-            sys.exit()
-
+            logger.error('[{}] : [ERROR] Error while executing shap processing with {} and {} '.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(inst), inst.args))
         return shap_values_d
 
     def __shap_feature_importance(self,
