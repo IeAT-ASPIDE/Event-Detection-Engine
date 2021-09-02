@@ -39,11 +39,14 @@ import shap
 
 
 class SciCluster:
-    def __init__(self, modelDir, pred_analysis):
+    def __init__(self,
+                 modelDir,
+                 pred_analysis=False):
         self.modelDir = modelDir
-        self.pred_analysis = pred_analysis # todo you are here
+        self.pred_analysis = pred_analysis
 
-    def dask_sdbscanTrain(self, settings,
+    def dask_sdbscanTrain(self,
+                          settings,
                           mname,
                           data,
                           scaler=None):
