@@ -1209,7 +1209,7 @@ class EDEngine:
                         asudata = sudata
                     if checkpoint:
                         asudata.to_csv(os.path.join(self.dataDir, 'pr_data_detect_augmented.csv'))
-                    smodel = sede.SciCluster(modelDir=self.modelsDir)
+                    smodel = sede.SciCluster(modelDir=self.modelsDir, pred_analysis=self.pred_analysis)
                     anomalies = smodel.dask_detect(self.detectmethod, self.load, data=asudata)
                     if not anomalies['anomalies']:
                         logger.info('[{}] : [INFO] No anomalies detected with {}'.format(

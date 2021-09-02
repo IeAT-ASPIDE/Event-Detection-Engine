@@ -101,11 +101,21 @@ Training:
     verbose: True
     bootstrap: True
 
-Detect:   # Method loading has the form <Method>_<Load>.pkl
-  Method: IsolationForest
+#Detect:   # Method loading has the form <Method>_<Load>.pkl
+#  Method: IsolationForest
+#  Type: clustering
+#  Load: clustering_2
+#  Scaler: StandardScaler  # Same as for training
+
+Detect:
+  Method: IForest
   Type: clustering
-  Load: clustering_2
-  Scaler: StandardScaler  # Same as for training
+  Load: cluster_y2_v3
+  Scaler: StandardScaler
+#  Analysis: True # Start Shapely value based analysis
+  Analysis:
+    Plot: True
+
 
 
 Misc:
