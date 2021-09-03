@@ -1221,7 +1221,6 @@ class EDEngine:
                         logger.info('[{}] : [DEBUG] Reporting detected anomalies: {}'.format(
                             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), anomalies))
                         self.reportAnomaly(anomalies, dask=True)
-                        # print(anomalies)
                         sleep(parseDelay(self.delay))
             elif self.detecttype == 'classification':
                 logger.info('[{}] : [INFO] Detection with classifier started. Getting data ...'.format(
