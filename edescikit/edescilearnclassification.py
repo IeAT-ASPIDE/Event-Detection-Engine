@@ -232,6 +232,7 @@ class SciClassification:
         anomaliesList = []
         nl = 0
         explainer = 0
+        plot = False
         if not smodel:
             dpredict = 0
         else:
@@ -259,11 +260,16 @@ class SciClassification:
                 nl = normal_label
             anomalyArray = np.argwhere(dpredict != nl)  # Pandas bug where np.argwhere not working on dataframes
             if self.pred_analysis and anomalyArray.shape[0]:
+                try:
+                    plot = self.pred_analysis['Plot']
+                except Exception:
+                    plot = False
                 df_anomaly_data = data.copy(deep=True)  # copy for second filter using pandas
                 df_anomaly_data['target'] = dpredict
                 anomaliesDict['complete_shap_analysis'], explainer, shap_values = self.__shap_analysis(smodel,
                                                                                                        df_anomaly_data,
-                                                                                                       normal_value=nl)
+                                                                                                       normal_value=nl,
+                                                                                                       plot=plot)
             count = 0 # todo merge filtering of dpred detection; related to np.argwhere bug for pandas and __shap_analysis data refiltering
             for an in anomalyArray:
                 anomalies = {}
@@ -276,6 +282,10 @@ class SciClassification:
                                                                           label=dpredict[an[0]],
                                                                           feature_names=data.columns,
                                                                           instance=count)
+                    if plot and count < 10: # todo make number of force plots user definable
+                        self.__shap_force_plot(explainer=explainer, shap_values=shap_values, data=data,
+                                               label=dpredict[an[0]], instance=count, utc=anomalies['utc'])
+
                 anomaliesList.append(anomalies)
                 count += 1
         anomaliesDict['anomalies'] = anomaliesList
@@ -288,7 +298,8 @@ class SciClassification:
     def __shap_analysis(self,
                         model,
                         data,
-                        normal_value):
+                        normal_value,
+                        plot):
         # todo use non tokenized labels for data
         """
         Shap analysis of incoming data
@@ -317,6 +328,8 @@ class SciClassification:
         feature_imp = self.__shap_feature_importance(shap_values=shap_values,
                                                      data=data,
                                                      label=labels)
+        if plot:
+            self.__shap_summary_plot(shap_values, data_filtered, labels)
         return feature_imp, explainer, shap_values
 
     def __shap_values_processing(self,
@@ -343,6 +356,51 @@ class SciClassification:
             logger.error('[{}] : [ERROR] Error while executing shap processing with {} and {} '.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(inst), inst.args))
         return shap_values_d
+
+    def __shap_summary_plot(self,
+                            shap_values,
+                            data,
+                            label):
+
+        """
+        Summary plots are a different representation of feature importance. This is a per class basis.
+
+        :param shap_values: Shapley values.
+        :param data: Data collected from monitoring or local file defined in by the user. Only anomalous instances are to be considered
+        :param label: List of anomaly labels
+        """
+        count = 0
+        for l in label:
+            shap.summary_plot(shap_values[count], data, class_names=label, title=f"Summary Plot for class {l}",
+                              show=False)
+            shap_summary_f = f"Shap_classificaiton_summary_class_{l}_{time.time()}.png"
+            plt.savefig(os.path.join(self.modelDir, shap_summary_f), bbox_inches="tight")
+            plt.close()
+            count += 1
+
+    def __shap_force_plot(self,
+                          explainer,
+                          shap_values,
+                          data,
+                          label,
+                          instance,
+                          utc):
+
+        """
+        Shap based force plot to check feature value impact on particular prediction instance.
+
+        :param explainer: Shap Explainer
+        :param shap_values: Shapely values
+        :param data: Data collected from monitoring or local file defined in by the user. Only anomalous instances are to be considered
+        :param label: Label identified by predictive model for the particular datapoint to be analysed
+        :param instance: Identifier of the particular data point to be analyzed
+        :param utc: Timestamp when the particular datapoint has been measured
+        """
+        shap.force_plot(explainer.expected_value[label], shap_values[label][instance], data.values[instance],
+                            feature_names=data.columns, show=False, matplotlib=True, text_rotation=90) # only works if matplotlib not JS, text rotation mandatory for long feature names
+        shap_force_f = f"Shap_classificaiton_force_class_{label}_{utc}.png"
+        plt.savefig(os.path.join(self.modelDir, shap_force_f), bbox_inches="tight") # bbox_inches tight not working with long feature names
+        plt.close()
 
     def __shap_feature_importance(self,
                                 shap_values,

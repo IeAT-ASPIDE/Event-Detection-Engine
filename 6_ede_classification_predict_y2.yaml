@@ -114,7 +114,9 @@ Detect:
   Type: classification
   Load: classification_y2_0
   Scaler: StandardScaler # Same as for training
-  Analysis: False # Start Shapely value based analysis
+#  Analysis: True # Start Shapely value based analysis
+  Analysis: # if plotting of heatmap, summary and feature importance is require, if not set False or use previous example
+    Plot: True
 
 
 
