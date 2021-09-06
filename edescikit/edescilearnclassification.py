@@ -24,7 +24,7 @@ import time
 import sys
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split, cross_validate, cross_val_score
+from sklearn.model_selection import train_test_split, cross_validate, cross_val_score, StratifiedShuffleSplit
 from sklearn.ensemble import IsolationForest
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
@@ -35,7 +35,9 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.cluster import DBSCAN
-from sklearn.metrics import make_scorer, SCORERS, get_scorer, classification_report, confusion_matrix
+from sklearn.metrics import make_scorer, SCORERS, get_scorer, classification_report, confusion_matrix, accuracy_score
+from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from imblearn.metrics import classification_report_imbalanced
 from yellowbrick.model_selection import LearningCurve, ValidationCurve, RFECV
 from yellowbrick.classifier import PrecisionRecallCurve, ROCAUC
@@ -51,6 +53,7 @@ import glob
 from util import ut2hum
 import shap
 from evolutionary_search import EvolutionaryAlgorithmSearchCV
+from edetensorflow.edetensor import dnn_aspide
 import itertools
 
 pd.options.mode.chained_assignment = None
@@ -870,10 +873,12 @@ class SciClassification:
 
         return 0
 
-    def dask_classifier(self, settings,
+    def dask_classifier(self,
+                        settings,
                         mname,
                         X,
-                        y, classification_method=None):
+                        y,
+                        classification_method=None):
         # Factorize input
         y_factor = pd.factorize(y)
         y = y_factor[0]
@@ -882,6 +887,102 @@ class SciClassification:
         # y = y.astype(int) # fix y being set as object
         user_m = False
         if classification_method is not None and classification_method != 'randomforest':  # TODO fix
+            if classification_method == "dnn": # todo unify with other methods, not self contained as now
+                classification_type = classification_method
+                logger.info('[{}] : [INFO] Classification Method set to {}'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), classification_type))
+                if not settings or settings is None:
+                    logger.warning('[{}] : [WARN] No {} parameters defined using defaults'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), classification_type))
+                    settings = {}
+                else:
+                    for k, v in settings.items():
+                        logger.info('[{}] : [INFO] {} parameter {} set to {}'.format(
+                            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), classification_type, k,
+                            v))
+                n_inputs, n_outputs = X.shape[1], len(np.unique(y))
+                settings.update({"n_input_shape": n_inputs, "n_output_shape": n_outputs})
+                try:
+                    clf = dnn_aspide(**settings)
+                    print(clf.summary())  # todo make toggle
+                except Exception as inst:
+                    logger.error('[{}] : [INFO] Failed to instanciate {} with {} and {}'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), classification_type,
+                        type(inst),
+                        inst.args))
+                    sys.exit(1)
+
+                #### Start better integrate into ede workflow #### Todo better integration
+
+                def wrapper_dnn_aspide(settings=settings):
+                    return dnn_aspide(**settings)
+
+                sss = StratifiedShuffleSplit(n_splits=5, test_size=0.25, random_state=42)  # todo make user definable
+                y = pd.Series(y)
+                fold = 1
+                batch_size = 128
+                try:
+                    with joblib.parallel_backend('dask'):
+                        logger.info('[{}] : [INFO] Using Dask backend for {}'.format(
+                            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), classification_type))
+                    for train_index, test_index in sss.split(X, y):
+                        Xtrain, Xtest = X.iloc[train_index], X.iloc[test_index]
+                        ytrain, ytest = y.iloc[train_index], y.iloc[test_index]
+
+                        y_oh_train = pd.get_dummies(ytrain, prefix='target')
+                        y_oh_test = pd.get_dummies(ytest, prefix='target')
+
+                        early_stopping = EarlyStopping(monitor="loss", patience=3)  # early stop patience
+                        reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2,
+                                                      patience=5, min_lr=0.00001)
+                        model = KerasClassifier(build_fn=wrapper_dnn_aspide, verbose=0, callbacks=[early_stopping, reduce_lr])
+                        history = model.fit(np.asarray(Xtrain), np.asarray(y_oh_train),
+                                            batch_size=batch_size,
+                                            epochs=999,
+                                            callbacks=[early_stopping, reduce_lr],
+                                            verbose=0, validation_data=(
+                            np.asarray(Xtest), np.asarray(y_oh_test)))  # verbose set to 1 will show the training process
+                        # Classification Report
+                        y_pred = model.predict(Xtest)
+                        logger.info('[{}] : [INFO] Computing classification report for fold {}'.format(
+                            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), fold))
+                        print(classification_report(ytest, y_pred, digits=4, target_names=y_definitions))
+                        report = classification_report(ytest, y_pred, digits=4, output_dict=True, target_names=y_definitions)
+                        df_classification_report = pd.DataFrame(report).transpose()
+                        classification_rep_name = "{}_classification_Report_{}_Fold_{}.csv".format("DNN", self.export, fold)
+                        df_classification_report.to_csv(os.path.join(self.modelDir, classification_rep_name))
+                        logger.info('[{}] : [INFO] Computing imbalanced classification report for fold {}'.format(
+                            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), fold))
+                        print(classification_report_imbalanced(ytest, y_pred, digits=4, target_names=y_definitions))
+                        imb_cf_report = classification_report_imbalanced(ytest, y_pred, output_dict=True, digits=4,
+                                                                         target_names=y_definitions)
+                        df_imb_classification_report = pd.DataFrame(imb_cf_report).transpose()
+                        imb_df_report_name = f"DNN_Imbalanced_classification_Report_{self.export}_Fold_{fold}.csv"
+                        df_imb_classification_report.to_csv(os.path.join(self.modelDir, imb_df_report_name))
+                        logger.info('[{}] : [INFO] Computing confusion matrix for fold {}'.format(
+                            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), fold))
+                        self.__confusion_matrix(ytest, y_pred, definitions=y_definitions, model_name=self.export,
+                                                fold=fold)
+                        logger.info('[{}] : [INFO] Saving Training History fold {}'.format(
+                            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), fold))
+                        # Saving History
+                        df_history = pd.DataFrame(history.history)
+                        history_name = "DNN_Fold{}_{}_history.csv".format(fold, self.export)
+                        df_history.to_csv(os.path.join(self.modelDir, history_name), index=False)
+
+                        # Save Keras Model
+                        logger.info('[{}] : [INFO] Saving Model for fold {}'.format(
+                            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), fold))
+                        model_name = "DNN_Fold{}_{}_model.keras".format(fold, self.export)
+                        clf.save(os.path.join(self.modelDir, model_name))
+                        fold += 1
+                except Exception as inst:
+                    logger.error('[{}] : [ERROR] Failed to fit {} with {} and {}'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), classification_type,
+                        type(inst), inst.args))
+                    sys.exit(1)
+                return
+                #### Stop better integrate into ede workflow ####
             user_m = True
             try:
                 classification_type = str(classification_method).split('(')[0]

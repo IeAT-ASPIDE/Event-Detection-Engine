@@ -28,8 +28,8 @@ import pandas as pd
 import os
 
 
-def dnn_aspide(X,
-               y,
+def dnn_aspide(n_input_shape,
+               n_output_shape,
                optimizer='adam',  # adam, adagrad, sgd
                learning_r=0.01,
                kernel_init='he_normal',
@@ -42,9 +42,10 @@ def dnn_aspide(X,
                activation_1='relu',  # elu, selu
                out_activation='sigmoid'):
 
-    y_oh = pd.get_dummies(y, prefix='target')
+    # y_oh = pd.get_dummies(y, prefix='target')
     # print(np.asarray(X).shape[1], len(y_oh.nunique()))
-    n_inputs, n_outputs = X.shape[1], len(y_oh.nunique())
+
+    n_inputs, n_outputs = n_input_shape, n_output_shape
     model = Sequential()
     # model.add(Conv1D(filters=32, kernel_size=2,activation=activation_1, input_shape=n_inputs, kernel_initializer=kernel_init))
     model.add(Dense(layer_0, input_dim=n_inputs, kernel_initializer=kernel_init, activation=activation_1))
@@ -72,8 +73,8 @@ def dnn_aspide(X,
     else:
       opt = Adam(learning_rate=0.01)
     model.compile(optimizer=opt, loss=loss, metrics=['accuracy', 'categorical_crossentropy', 'binary_crossentropy'])
-    return model
 
+    return model
 
 def ede_dnn(dnn_model,
             Xtrain,
