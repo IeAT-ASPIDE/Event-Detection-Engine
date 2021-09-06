@@ -1004,7 +1004,7 @@ if __name__ == "__main__":
         datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
         sys.exit(0)
     signal(SIGINT, handler)
-    SchedulerEndpoint, Scale, SchedulerPort, EnforceCheck = check_dask_settings()  # Todo Better solution
+    SchedulerEndpoint, Scale, SchedulerPort, EnforceCheck = check_dask_settings(cnf=sys.argv[1:])  # Todo Better solution
     if SchedulerEndpoint:
         if SchedulerEndpoint == "local":
             cluster = LocalCluster(n_workers=int(Scale))

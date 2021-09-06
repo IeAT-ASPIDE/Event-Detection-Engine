@@ -22,6 +22,7 @@ import sys
 from os.path import isfile, join
 from edelogger import logger
 import yaml
+import getopt
 from functools import wraps
 import os
 import csv
@@ -295,10 +296,18 @@ def checkFile(file):
 
 def check_dask_settings(cnf=None):
     if cnf is None:
-        cnf = 'ede_config.yaml'
-
+        cnf_file = 'ede_config.yaml'
     try:
-        with open(cnf) as cf:
+        opts, args = getopt.getopt(cnf, "he:tf:m:vx:d:lq:", ["endpoint=", "file=", "method=", "export=", "detect=", "query="])  # todo:expand command line options
+    except getopt.GetoptError:
+        logger.warning('[%s] : [WARN] Invalid argument received exiting', datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
+        print("ede.py -f <filelocation>, -t -m <method> -v -x <modelname>")
+        sys.exit(0)
+    for opt, arg in opts:
+        if opt in ("-f", "--file"):
+            cnf_file = arg
+    try:
+        with open(cnf_file) as cf:
             readCnf = yaml.unsafe_load(cf)
         SchedulerEndpoint = readCnf['Connector']['Dask']['SchedulerEndpoint']
         Scale = readCnf['Connector']['Dask']['Scale']
