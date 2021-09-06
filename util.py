@@ -28,6 +28,7 @@ import csv
 import pandas as pd
 from datetime import datetime
 import time
+import numpy as np
 
 
 modelDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models')
@@ -330,58 +331,25 @@ def check_valid2(f, end):
     return wrapper()
 
 
+def revers_oh(y_oh):
+    """
+    One hot decoding for DNN
+    :param y_oh: one hot encoded gorund truth or prediction
+    :return: decoded y_oh
+    """
+    decode = []
+    for r in y_oh:
+        result = np.where(r==1.)[0]
+        # check if network assigned more than one or non labels
+        if len(result) > 1 or len(result) == 0:
+            if len(result) > 1:
+                result = np.array(result[0])  # select first class
+            elif len(result) == 0:
+                result = np.array[0]
+        decode.append(result[0])
+    return decode
 
 
-# t = 1582065594
-# print(ut2hum(t))
-# def check_valid(func, endpoint):
-#     def inner_function(func):
-#     @wraps(func)
-#     def wrapper(*args, **kwargs):
-#         if not endpoint:
-#             logger.error('[%s] : [ERROR] PR Endpoint not defined in config',
-#                          datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
-#             sys.exit(1)
-#         else:
-#             func(*args, **kwargs)
-#     return wrapper
-#     return inner_function
-
-# wait4Model()
-
-# test = {'s': '10', 'n': '10'}
-# print parseMethodSettings(test)
-# test = '1m'
-# test2 = '1s'
-# test3 = '1h'
-# print parseDelay(test)
-# print parseDelay(test2)
-# print parseDelay(test3)
-# test = True
-# print type(test)
-# print str2Bool(test)
-
-# testLoad = 'shortterm:gd:2.0;midterm:ld:0.1;longterm:gd:1.0'
-# testLoad = 'default'
-# testLoad = ' '
-# print pointThraesholds(testLoad)
-# testNetwork = 'tx:gd:34344;rx:ld:323434'
-# print pointThraesholds(testNetwork)
-# testMemory = 'cached:gd:231313;buffered:ld:312123;used:ld:12313;free:gd:23123'
-# print pointThraesholds(testMemory)
-# testcsv = "/Users/Gabriel/Documents/workspaces/diceWorkspace/dmon-adp/data/JVM_NM_dice.cdh.slave1.csv"
-#
-# print csvheaders2colNames(testcsv, 'slave1')
-
-
-
-
-# print getModelList()
-# query = "yarn:resourcemanager, clustre, jvm_NM;system"
-# query2 = {"Query": "yarn;system;spark"}
-# test = queryParser(query)
-# print test
-# print queryParser(query2)
 
 
 
