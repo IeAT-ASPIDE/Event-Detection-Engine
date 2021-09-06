@@ -50,6 +50,7 @@ from util import str2Bool
 import glob
 from util import ut2hum
 import shap
+from evolutionary_search import EvolutionaryAlgorithmSearchCV
 import itertools
 
 pd.options.mode.chained_assignment = None
@@ -1639,6 +1640,23 @@ class SciClassification:
             else:
                 gs_settings.update({"estimator": clf})
                 search = GridSearchCV(**gs_settings)
+        elif hpomethod == "Evol":
+            ev_settings = {
+                "params": param_dist,
+                "cv": cv,
+                "scoring": scorer
+            }
+            ev_settings.update(hpoparam)
+            for k, v in ev_settings.items():
+                logger.info('[{}] : [INFO] RandomSearch param {} set to {}'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), k, v))
+            if user_m:
+                ev_settings.update({"estimator": classification_method})
+                search = EvolutionaryAlgorithmSearchCV(**ev_settings)
+                # EvolutionaryAlgorithmSearchCV()
+            else:
+                ev_settings.update({"estimator": clf})
+                search = EvolutionaryAlgorithmSearchCV(**ev_settings)
         else:
             logger.error('[{}] : [ERROR] Invalid HPO method specified: {}'.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), hpomethod))
@@ -1646,9 +1664,12 @@ class SciClassification:
         try:
             refit = hpoparam['refit']
         except Exception as inst:
-            logger.error('[{}] : [ERROR] HPO param must be set! Exiting!'.format(
-                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
-            sys.exit(1)
+            if hpomethod == "Evol":
+                refit = 0
+            else:
+                logger.error('[{}] : [ERROR] HPO param must be set, with {} and {}! Exiting!'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(inst), inst.args))
+                sys.exit(1)
         try:
             with joblib.parallel_backend('dask'):
                 logger.info('[{}] : [INFO] Using Dask backend for HPO of {}'.format(
@@ -1659,7 +1680,6 @@ class SciClassification:
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), classification_type, type(inst),
                 inst.args))
             sys.exit(1)
-
         if isinstance(refit, str) or refit:
             # print(search.best_score_)
             if isinstance(refit, str):
@@ -1696,9 +1716,40 @@ class SciClassification:
             cv_res.to_csv(cv_res_loc, index=False)
             logger.info('[{}] : [INFO] Saving Best Estimator ...'.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), hpomethod, cv, cv_res_loc))
-            # print(sr_clf.best_estimator_)
-            # print(sr_clf.cv_results_)
             self.__serializemodel(model=sr_clf.best_estimator_, method=classification_type, mname=self.export)
+        elif hpomethod == "Evol":
+            logger.info('[{}] : [INFO] Best HPO {} score {}'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), classification_type,
+                search.best_score_))
+            for k, v in search.best_params_.items():
+                logger.info('[{}] : [INFO] Classifier {} param {} best value {}'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), classification_type, k, v))
+            best_conf_loc = os.path.join(self.modelDir,
+                                         "{}_HPO_{}_best_{}_config.yaml".format(classification_type, hpomethod,
+                                                                                self.export))
+            logger.info('[{}] : [INFO] Saving best configuration to {}'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), best_conf_loc))
+
+            with open(best_conf_loc, 'w') as yaml_config:
+                yaml.dump(search.best_params_, yaml_config, default_flow_style=False)
+
+            if isinstance(self.cv, dict):
+                cv_name = self.cv['Type']
+            elif self.cv is None:
+                cv_name = 5  # Default value for random and Grid
+            else:
+                cv_name = cv
+
+            cv_res_loc = os.path.join(self.modelDir,
+                                      "{}_HPO{}_CV_{}_restults.csv".format(classification_type, hpomethod, cv_name))
+            logger.info('[{}] : [INFO] Saving HPO {} {} CV Metrics to {}'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), hpomethod, cv, cv_res_loc))
+            search.cv_results_.pop('nan_test_score?')
+            cv_res = pd.DataFrame(search.cv_results_)
+            cv_res.to_csv(cv_res_loc, index=False)
+            logger.info('[{}] : [INFO] Saving Best Estimator ...'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), hpomethod, cv, cv_res_loc))
+            self.__serializemodel(model=search.best_estimator_, method=classification_type, mname=self.export)
         else:
             logger.warning('[{}] : [WARN] Skipping HPO Report ...'.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
