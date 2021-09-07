@@ -16,7 +16,7 @@ are more complex but ultimately yield a much deeper understanding about the inne
 These types of anomalies are fairly common in complex systems.
 
 Contextual anomalies are extremely interesting in the case of complex systems. These types of anomalies happen when a 
-certain constellation of feature values is encountered. In isolation these values are not anomalous but when viewed in 
+certain constellation of feature values are encountered. In isolation these values are not anomalous but when viewed in 
 context they represent an anomaly. These type of anomalies represent application bottlenecks, imminent hardware failure 
 or software miss-configuration. The last major type of anomaly which are relevant are temporal or sometimes sequential 
 anomalies where a certain event takes place out of order or at the incorrect time. These types of anomalies are very 
@@ -97,7 +97,7 @@ This sections parameters are:
 * _PREndpoint_ - Endpoint for fetching Prometheus data
 * _ESEndpoint_ - Endpoint for fetching ElasticSearch data
 * _MPort_ - Sets the monitoring port for the selected Endpoint (defaults to 9200)
-* _KafkaEndpoint_ - Endpoint for a pre existing Kafka deployment
+* _KafkaEndpoint_ - Endpoint for a pre-existing Kafka deployment
 * _KafkaPort_ - Sets the Kafka port for the selected Kafka Endpoint (defaults to 9092)
 * _KafkaTopic_ - Name of the kafka topic to be used
 * _Query_ - The query string to be used for fetching data:
@@ -123,8 +123,8 @@ This sections parameters are:
      
 
 **Notes**: 
-* Only one of type of connector endpoint (PREndpoint or ESEndpoint) is supported in any given time.
-* If Local is defined than it will ignore any other data.
+* Only one of type of connector endpoint (PREndpoint or ESEndpoint) is supported at any given time.
+* If Local is defined than it will ignore any other data sources.
 
 ### Mode
 
@@ -146,8 +146,13 @@ parameters listed bellow:
     * __gd__ - Lower bound
     * __ld__ - Upper bound
 * __DColumns__ - list of columns to be deleted (dropped)
+  * __Dlist__ - expects an external yaml file containing a list of columns to be dropped (usefull removing large number of features)
 * __Fillna__ - fills `None` values with `0`
 * __Dropna__ - deletes columns wiith `None` values
+* __LowVariance__ - used to detect and remove low variance features automatically
+* __DWild__ - Removes columns based on regex
+    * __Regex__ - Regex to be used for fitlering
+    * __Keep__ - If `True` all selected columns are kept the rest are dropped, otherwise selected columns are dropped.
 
 **Notes:**
 * Some machine learning models cannot deal with `None` values to this end the __Fillna__ or __Dropna__ parameters where introduced. It is important to note
@@ -203,7 +208,7 @@ The available parameters are:
               - node_memory_Buffers_bytes_10.211.55.102:9100
               - node_memory_Buffers_bytes_10.211.55.103:9100
     ```
-    * __RemoveFiltered__ - If set to true the metrics used dufing these operatons will be deleted, the resulting augmented columns remaining
+    * __RemoveFiltered__ - If set to `True` the metrics used during these operations will be deleted, the resulting augmented columns remaining
     * __Method__ - Excepts User defined augmentations (i.e. python functions) for feature engineering
         * Methods should be wrapped as can bee seen in the [wrapper_add_column](https://github.com/DIPET-UVT/EDE-Dipet/blob/master/edeuser/user_methods.py#L44) example
         * All keyword arguments should be passable to the wrapped function
@@ -226,6 +231,29 @@ support scikit-learn API conventions such as: Tensorflow, Keras, LightGBM, XGBoo
 * __Export__ - Name of the preictive model  to be exported (serialized)
 * __MethodSettings__ - Setting dependant on machine learning method selected.
 * __Target__ - Denotes the ground truth column name to be used. This is mandatory in the case of classification. If no `target` is defined the last column is used instead.
+
+In the case of classification we have several additional options we can select:
+
+* __Verbose__ - Will save a full classification report, confusion matrix, feature importance (if applicable) for all folds 
+* __PrecisionRecallCurve__ - Will plot the Precision Recall curve of the selected model
+* __ROCAUC__ - Will plot the ROCAUC for the selected model
+* __RFE__ - Will execute and plot recursive feature elimination. It will save a yaml file containing a list of features to be eliminated, usable by _DList_ from __DColumn__.
+    * _scorer_ - Defines the scorer to be used
+    * _step_ - Defines the step for feature elimination. If there are a lot of features in the data this can take a long time to execute. In this case a larger step function is advised.
+* __DecisionBoundary__ - Will plot the decision boundary after executing _PCA_ with 2 components. For large number of classes the process of dimensionality reduction can result in noisy plots.
+* __LearningCurve__ - Shows the relationship between model preformance and the amount of features/ training samples
+  *_sizes_ - Used to define the training samples for ploting, can be list or use generator function as seen in the example bellow.
+  *_scorer_ - Scorer to be used
+  *_n_jobs_ - Number of jobs to be executed, if Dask backend is used it will handle schedueling of these jobs.
+* __ValidationCurve__ - Used to finetune a specific parameter, checking  out of sample performance
+    * _param_name_ - Name of Hyper-parameter to be optimized
+    * _param_range_ - Range of values to check (list can be generated using generator functions same as for __LearningCurve__).
+    * _scorer_ - Scorer to be used
+    * _n_jobs_ - Number of jobs to be executed, if Dask backend is used it will handle schedueling of these jobs.
+    
+__Note__: When training an unsupervised method, by default it will generate a decision boundary and feature separation plots for the selected Model.
+
+
 
 Example for clustering:
 
@@ -255,6 +283,32 @@ Training:
     verbose: True
     bootstrap: True
   Target: target
+  LearningCurve:
+    sizes: !!python/object/apply:numpy.core.function_base.linspace
+      kwds:
+        start: 0.3
+        stop: 1.0
+        num: 10
+    scorer: f1_weighted
+    n_jobs: 5
+  ValidationCurve:
+    param_name: n_estimators
+    param_range:
+    - 10
+    - 20
+    - 60
+    - 100
+    - 200
+    - 600
+    scoring: f1_weighted
+    n_jobs: 8
+  PrecisionRecallCurve: 1
+  ROCAUC: 1
+  RFE:
+    scorer: f1_weighted
+    step: 10
+  DecisionBoundary: 1
+  Verbose: 1
 ```
 
 Similar to how users can add their own implementations for augmentations it is also possible to add custom machine learning
@@ -321,21 +375,21 @@ An example Scorer chain definition can be found here:
 Scorers:
     Scorer_list:
       - Scorer:
-          Scorer_name: AUC
-          skScorer: roc_auc
+          Scorer_name: F1_weighted
+          skScorer: f1_weighted
       - Scorer:
           Scorer_name: Jaccard_Index
-          skScorer: jaccard
+          skScorer: jaccard_weighted # changes in scoring sklearn, for multiclass add suffix micro, weighted or sample
       - Scorer:
-          Scorer_name: Balanced_Acc
-          skScorer: balanced_accuracy
-    User_scorer1: f1_score # key is user defined, can be changed same as Scorer_name
+          Scorer_name: AUC
+          skScorer: roc_auc_ovr_weighted
+    User_scorer1: balanced_accuracy_score # key is user defined, can be changed same as Scorer_name
 ``` 
  
 
 #### Hyper-parameter optimization
 
-EDE also supports hyper parameter optimization methods such as: _grid_ and _random_ search, _bayesian_ search and the _tpot_ framework. The following parameters are used for HPO:
+EDE also supports hyper parameter optimization methods such as: _grid_ and _random_ search, _bayesian_ and _evolutionary_ search and the _tpot_ framework. The following parameters are used for HPO:
 
 * __HPOMethod__ - Name of the hyper parameter optimization to be used
 * __HPOParam__ - HPO parameters:
@@ -396,7 +450,49 @@ Training:
     User_scorer1: f1_score # key is user defined, can be changed same as Scorer_name
 ```
 
-
+Example of HPO using the evolutionary search method:
+```yaml
+Training:
+  Type: hpo
+  HPOMethod: Evol  # Random, Grid, Bayesian, tpot, Evol
+  HPOParam:
+    n_jobs: 1 # must be number, not -1 for all in case of Evol
+    scoring: f1_weighted
+    gene_mutation_prob: 0.20
+    gene_crossover_prob: 0.5
+    tournament_size: 4
+    generations_number: 30
+    population_size: 40  # if multi metric used, refit should be metric name, mandatory
+    verbose: 4
+  Method: randomforest
+  ParamDistribution:
+    n_estimators:
+      - 10
+      - 100
+    max_depth:
+      - 2
+      - 3
+  Target: target
+  Export: hpo_1_y2
+  CV:
+    Type: StratifiedKFold  # user defined all from sklearn
+    Params:
+      n_splits: 5
+      shuffle: True
+      random_state: 5
+  Scorers:
+    Scorer_list:
+      - Scorer:
+          Scorer_name: F1_weighted
+          skScorer: f1_weighted
+      - Scorer:
+          Scorer_name: Jaccard_Index
+          skScorer: jaccard_weighted # changes in scoring sklearn, for multiclass add suffix micro, weighted or sample
+      - Scorer:
+          Scorer_name: AUC
+          skScorer: roc_auc_ovr_weighted
+    User_scorer1: balanced_accuracy_score
+```
 #### TPOT
 
 [TPOT](http://epistasislab.github.io/tpot/) is an automated machine learning framework designed around scikit-learn (and nay other framework which conforms to the scikit-learn API conventions). In contrast to other such tools it does not focus solely on the hyper-parameters
@@ -463,7 +559,11 @@ Prediction is largely unchanged between the various EDE modes. Its parameters ar
 * __Type__ - Specifies what type the model is (i.e. clustering, classsification, tpot etc.)
 * __Load__ - Name of the serialized predictive model to be instantiated. See the export from training.
 * __Scaler__ - Name of the scaler (if used). Once the scaler has been invoced during training the result will be serialized by EDE and can be reused for prediction.
-
+* __Analysis__ - Will attach root cause analysis in the form of computed Shapely values and feature importance for all detected anomalous instances.
+    * _Plot_- If set to `True` it will generate plots for each detected anomalous instance;
+        * _Clustering_: feature importance, summary and heatmap
+        * _Classification_: force, summary
+    
 Example of a prediction:
 
 ```yaml
@@ -472,6 +572,9 @@ Detect:
   Type: clustering
   Load: clustering_1
   Scaler: StandardScaler  # Same as for training
+  #Analysis: True
+  Analysis: # if plotting of heatmap, summary and feature importance is require, if not set False or use previous example
+    Plot: True
 ```
 
 ### Analysis
@@ -512,17 +615,106 @@ Analysis:
            - node_load1_10.211.55.103:9100
            - time
          location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+   - Method: !!python/object/apply:edeuser.user_methods.wrapper_improved_pearson
+       kwds:
+         name: Test_Training
+         dcol:
+           - target
+         location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+         show: False
+   - Method: !!python/object/apply:edeuser.user_methods.wrapper_rank2
+       kwds:
+         name: Test_rank
+         dcol:
+           - target
+         location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+         algorithm: spearman
+         show: False
+   - Method: !!python/object/apply:edeuser.user_methods.wrapper_rank1
+       kwds:
+         name: Test_rank1
+         dcol:
+           - target
+         location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+         algorithm: shapiro
+   - Method: !!python/object/apply:edeuser.user_methods.wrapper_pca_plot
+       kwds:
+         name: Test_PCA
+         location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+         projection: 3
+         target: target
+#         show: False
+   - Method: !!python/object/apply:edeuser.user_methods.wrapper_manifold
+       kwds:
+         name: Test_manifold
+         target: target
+         location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+         manifold: tsne
+         n_neighbors: 10
+   - Method: !!python/object/apply:edeuser.user_methods.wrapper_manifold
+       kwds:
+         name: Test_manifold
+         target: target
+         location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+         manifold: hessian
+   - Method: !!python/object/apply:edeuser.user_methods.wrapper_plot_on_features
+       kwds:
+         name: complete_columns
+         target: target
+         location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+
  Solo: True
 ```
 
 
 ### Point
 
-TODO
+```yaml
+Point:
+  Memory:
+    cached:
+      gd: 231313
+      ld: 312334
+    buffered:
+      gd: 231313
+      ld: 312334
+    used:
+      gd: 231313
+      ld: 312334
+  Load:
+    shortterm:
+      gd: 231313
+      ld: 312334
+    midterm:
+      gd: 231313
+      ld: 312334
+  Network:
+    tx:
+      gd: 231313
+      ld: 312334
+    rx:
+      gd: 231313
+      ld: 312334
+```
 
 ### Misc
+mMiscellaneous settings:
+* __heap__: Size of JVM heap used for weka based methods (now deprecated, will be removed in next version)
+* __checkpoint__: All filtering, augmentation steps will can be set to save to disk their results, thus in case of faliure processing can be resumed from the last step succesfully executed from the EDE processing pipeline.
+* __delay__ : Used to set how often new data is to be fetched from the datasource. Same as __QDelay__'
+* __interval__: Query interval to be used when generating query strings. It will be ignored if user defined query string is used.
+* __resetindex__: Deletes anomaly index in case ElasticSearch is used for reporting.
+* __point__: Toggles point anomaly execution (now deprecated, will be removed in next version)
 
-TODO
+```yaml
+Misc:
+  heap: 512m
+  checkpoint: True
+  delay: 15s
+  interval: 30m
+  resetindex: False
+  point: False
+ ```
 
 ## Complete example configurations
 
