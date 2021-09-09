@@ -22,7 +22,7 @@ backports.weakref==1.0.post1
 bayesian-optimization==1.2.0
 bcrypt==3.1.7
 beautifulsoup4==4.9.3
-bleach==2.1.4
+bleach==3.3.0
 blessings==1.7
 bokeh==2.3.1
 Brotli==1.0.9
