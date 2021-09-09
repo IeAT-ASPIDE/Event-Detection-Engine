@@ -39,7 +39,7 @@ colorama==0.4.4
 colorful==0.5.4
 combo==0.1.2
 ConfigSpace==0.4.14
-cryptography==2.9
+cryptography==3.3.2
 cycler==0.10.0
 Cython==0.29.22
 dask==2021.4.0
