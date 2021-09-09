@@ -112,9 +112,9 @@ Detect:
   Type: clustering
   Load: cluster_y2_v3
   Scaler: StandardScaler
-  Analysis: True # Start Shapely value based analysis
-#  Analysis: # if plotting of heatmap, summary and feature importance is require, if not set False or use previous example
-#    Plot: True
+  # Analysis: True # Start Shapely value based analysis
+  Analysis: # if plotting of heatmap, summary and feature importance is require, if not set False or use previous example
+    Plot: True
 
 
 

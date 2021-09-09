@@ -66,86 +66,87 @@ Augmentation:
 #    Verbose: 0
 
 
-Training:
-  Type: classification
-  Method: dnn
-  MethodSettings:
-    optimizer: 'adam'
-    learning_r: 0.01
-    kernel_init: 'he_normal'
-    layer_1: 0
-    layer_2: 50
-    layer_3: 100
-    layer_0: 50
-    drop: 0.3
-    loss: 'categorical_crossentropy'
-    activation_1: 'relu'
-    out_activation: 'sigmoid'
-  Export: dnn_y2
-
-
 #Training:
 #  Type: classification
-#  Method: !!python/object/apply:sklearn.ensemble.RandomForestClassifier  # DONT forger ../apply
-#    _sklearn_version: '0.24.2'
-#    n_estimators: 100
-#    criterion: "gini"
-#    min_sample_split: 2
-#    min_sample_leaf: 1
-#    max_features: "log2"
-#    n_jobs: -1
-#    random_state: 42
-#    verbose: 1
-#  Target: target
-#  Export: classification_y2
-#  ValidRatio: 0.2
-#  TrainScore: True # expensive if set to false only test scores are computed
-#  ReturnEstimators: True
-#  CV:
-#    Type: StratifiedKFold  # user defined all from sklearn, if int than used standard
-#    Params:
-#      n_splits: 5
-#      shuffle: True
-#      random_state: 5
-#  Scorers:
-#    Scorer_list:
-#      - Scorer:
-#          Scorer_name: F1_weighted
-#          skScorer: f1_weighted
-#      - Scorer:
-#          Scorer_name: Jaccard_Index
-#          skScorer: jaccard_weighted # changes in scoring sklearn, for multiclass add suffix micro, weighted or sample
-#      - Scorer:
-#          Scorer_name: AUC
-#          skScorer: roc_auc_ovr_weighted
-#    User_scorer1: balanced_accuracy_score # key is user defined, can be changed same as Scorer_name
+#  Method: dnn
+#  MethodSettings:
+#    optimizer: 'adam'
+#    learning_r: 0.01
+#    kernel_init: 'he_normal'
+#    layer_1: 0
+#    layer_2: 50
+#    layer_3: 100
+#    layer_0: 50
+#    drop: 0.3
+#    loss: 'categorical_crossentropy'
+#    activation_1: 'relu'
+#    out_activation: 'sigmoid'
+#  Export: dnn_y2
 
-#  LearningCurve:
-#    sizes: !!python/object/apply:numpy.core.function_base.linspace
-#      kwds:
-#        start: 0.3
-#        stop: 1.0
-#        num: 10
-#    scorer: f1_weighted
-#    n_jobs: 5
-#  ValidationCurve:
-#    param_name: n_estimators
-#    param_range:
-#      - 10
-#      - 20
-#      - 60
-#      - 100
-#      - 200
-#      - 600
-#    scoring: f1_weighted
-#    n_jobs: 8
-#  PrecisionRecallCurve: 1
-#  ROCAUC: 1
-#  RFE:
-#    scorer: f1_weighted
-#    step: 10
-#  DecisionBoundary: 1
-#  Verbose: 0
+
+Training:
+  Type: classification
+  Method: !!python/object/apply:sklearn.ensemble.RandomForestClassifier  # DONT forger ../apply
+    _sklearn_version: '0.24.2'
+    n_estimators: 100
+    criterion: "gini"
+    min_sample_split: 2
+    min_sample_leaf: 1
+    max_features: "log2"
+    n_jobs: -1
+    random_state: 42
+    verbose: 1
+  Target: target
+  Export: classification_y2
+  ValidRatio: 0.2
+  TrainScore: True # expensive if set to false only test scores are computed
+  ReturnEstimators: True
+  CV:
+    Type: StratifiedKFold  # user defined all from sklearn, if int than used standard
+    Params:
+      n_splits: 5
+      shuffle: True
+      random_state: 5
+  Scorers:
+    Scorer_list:
+      - Scorer:
+          Scorer_name: F1_weighted
+          skScorer: f1_weighted
+      - Scorer:
+          Scorer_name: Jaccard_Index
+          skScorer: jaccard_weighted # changes in scoring sklearn, for multiclass add suffix micro, weighted or sample
+      - Scorer:
+          Scorer_name: AUC
+          skScorer: roc_auc_ovr_weighted
+    User_scorer1: balanced_accuracy_score # key is user defined, can be changed same as Scorer_name
+
+  LearningCurve:
+    sizes: !!python/object/apply:numpy.core.function_base.linspace
+      kwds:
+        start: 0.3
+        stop: 1.0
+        num: 10
+    scorer: f1_weighted
+    n_jobs: 5
+
+  ValidationCurve:
+    param_name: n_estimators
+    param_range:
+      - 10
+      - 20
+      - 60
+      - 100
+      - 200
+      - 600
+    scoring: f1_weighted
+    n_jobs: 8
+  PrecisionRecallCurve: 1
+  ROCAUC: 1
+  RFE:
+    scorer: f1_weighted
+    step: 10
+  DecisionBoundary: 1
+  Verbose: 1
 
 #Training:
 #  Type: classification

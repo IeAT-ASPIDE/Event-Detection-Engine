@@ -37,83 +37,83 @@ Augmentation:
 
 
 # For HPO methods
-Training:
-  Type: hpo
-  HPOMethod: Random  # random, grid, bayesian, tpot, evol
-  HPOParam:
-    n_iter: 2
-    n_jobs: -1
-    refit: F1_weighted  # if multi metric used, refit should be metric name, mandatory
-    verbose: True
-  Method: randomforest
-  ParamDistribution:
-    n_estimators:
-      - 10
-      - 100
-    max_depth:
-      - 2
-      - 3
-  Target: target
-  Export: hpo_1
-  CV:
-    Type: StratifiedKFold  # user defined all from sklearn
-    Params:
-      n_splits: 5
-      shuffle: True
-      random_state: 5
-  Scorers:
-    Scorer_list:
-      - Scorer:
-          Scorer_name: F1_weighted
-          skScorer: f1_weighted
-      - Scorer:
-          Scorer_name: Jaccard_Index
-          skScorer: jaccard_weighted # changes in scoring sklearn, for multiclass add suffix micro, weighted or sample
-      - Scorer:
-          Scorer_name: AUC
-          skScorer: roc_auc_ovr_weighted
-    User_scorer1: balanced_accuracy_score
+# Training:
+#   Type: hpo
+#   HPOMethod: Random  # random, grid, bayesian, tpot, evol
+#   HPOParam:
+#     n_iter: 2
+#     n_jobs: -1
+#     refit: F1_weighted  # if multi metric used, refit should be metric name, mandatory
+#     verbose: True
+#   Method: randomforest
+#   ParamDistribution:
+#     n_estimators:
+#       - 10
+#       - 100
+#     max_depth:
+#       - 2
+#       - 3
+#   Target: target
+#   Export: hpo_1
+#   CV:
+#     Type: StratifiedKFold  # user defined all from sklearn
+#     Params:
+#       n_splits: 5
+#       shuffle: True
+#       random_state: 5
+#   Scorers:
+#     Scorer_list:
+#       - Scorer:
+#           Scorer_name: F1_weighted
+#           skScorer: f1_weighted
+#       - Scorer:
+#           Scorer_name: Jaccard_Index
+#           skScorer: jaccard_weighted # changes in scoring sklearn, for multiclass add suffix micro, weighted or sample
+#       - Scorer:
+#           Scorer_name: AUC
+#           skScorer: roc_auc_ovr_weighted
+#     User_scorer1: balanced_accuracy_score
 
-#Training:
-#  Type: hpo
-#  HPOMethod: Evol  # Random, Grid, Bayesian, tpot, Evol
-#  HPOParam:
-#    n_jobs: 1 # must be number, not -1 for all
-#    scoring: f1_weighted
-#    gene_mutation_prob: 0.20
-#    gene_crossover_prob: 0.5
-#    tournament_size: 4
-#    generations_number: 30
-#    population_size: 40  # if multi metric used, refit should be metric name, mandatory
-#    verbose: 4
-#  Method: randomforest
-#  ParamDistribution:
-#    n_estimators:
-#      - 10
-#      - 100
-#    max_depth:
-#      - 2
-#      - 3
-#  Target: target
-#  Export: hpo_1_y2
-#  CV:
-#    Type: StratifiedKFold  # user defined all from sklearn
-#    Params:
-#      n_splits: 5
-#      shuffle: True
-#      random_state: 5
-#  Scorers:
-#    Scorer_list:
-#      - Scorer:
-#          Scorer_name: F1_weighted
-#          skScorer: f1_weighted
-#      - Scorer:
-#          Scorer_name: Jaccard_Index
-#          skScorer: jaccard_weighted # changes in scoring sklearn, for multiclass add suffix micro, weighted or sample
-#      - Scorer:
-#          Scorer_name: AUC
-#          skScorer: roc_auc_ovr_weighted
-#    User_scorer1: balanced_accuracy_score
+Training:
+ Type: hpo
+ HPOMethod: Evol  # Random, Grid, Bayesian, tpot, Evol
+ HPOParam:
+   n_jobs: 1 # must be number, not -1 for all
+   scoring: f1_weighted
+   gene_mutation_prob: 0.20
+   gene_crossover_prob: 0.5
+   tournament_size: 4
+   generations_number: 30
+   population_size: 40  # if multi metric used, refit should be metric name, mandatory
+   verbose: 4
+ Method: randomforest
+ ParamDistribution:
+   n_estimators:
+     - 10
+     - 100
+   max_depth:
+     - 2
+     - 3
+ Target: target
+ Export: hpo_1_y2
+ CV:
+   Type: StratifiedKFold  # user defined all from sklearn
+   Params:
+     n_splits: 5
+     shuffle: True
+     random_state: 5
+ Scorers:
+   Scorer_list:
+     - Scorer:
+         Scorer_name: F1_weighted
+         skScorer: f1_weighted
+     - Scorer:
+         Scorer_name: Jaccard_Index
+         skScorer: jaccard_weighted # changes in scoring sklearn, for multiclass add suffix micro, weighted or sample
+     - Scorer:
+         Scorer_name: AUC
+         skScorer: roc_auc_ovr_weighted
+   User_scorer1: balanced_accuracy_score
 
 Detect:
   Method: RandomForest
