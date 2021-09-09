@@ -31,7 +31,7 @@ and the substantial variety of solutions which could constitute a monitoring ser
 able to contend with fetching data from a plethora of systems. _Connectors_ is implemented such that it  serves as adapters for each solution. 
 Furthermore, this component also is be able to load data directly from static file (_HDF5_, _CSV_ , _JSON_, or even _raw format_). 
 
-![EDE Architecture](https://github.com/DIPET-UVT/EDE-Dipet/blob/master/architecture/ede_arch_v3-Page-2.png)
+![EDE Architecture](https://github.com/IeAT-ASPIDE/Event-Detection-Engine/blob/master/architecture/ASPIDE-EDE-Page-2.png)
 
 This aids in fine tuning of event and anomaly detection methods. We can also see that _data ingestion can be done directly_ 
 via query from the monitoring solution or _streamed directly from the queuing service_ (after ETL if necessary). 
