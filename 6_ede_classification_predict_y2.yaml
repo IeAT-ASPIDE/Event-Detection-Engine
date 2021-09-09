@@ -1,0 +1,193 @@
+Connector:
+  PREndpoint: 194.102.62.155 # hal720m.sage.ieat.ro
+  Dask:
+    SchedulerEndpoint: local # if not local add DASK schedueler endpoint
+    Scale: 3 # Number of workers if local otherwise ignored
+    SchedulerPort: 8787 # This is the default point
+    EnforceCheck: False # Irrelevant for local
+  MPort: 9200 # Moitoring port
+  KafkaEndpoint: 10.9.8.136
+  KafkaPort: 9092
+  KafkaTopic: edetopic
+  Query: {"query": '{__name__=~"node.+"}[1m]'}
+  MetricsInterval: "1m" # Metrics datapoint interval definition
+  QSize: 0
+  Index: time
+  QDelay: "10s" # Polling period for metrics fetching
+#  Local: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/data/demo_data.csv # Define the path to the local file for training
+
+Mode:
+  Training: False
+  Validate: False
+  Detect: True
+
+
+Filter:
+#  DColumns:  # Which columns to delete
+#    - node_boot_time_seconds_10.211.55.101:9100
+#    - node_boot_time_seconds_10.211.55.102:9100
+#    - node_boot_time_seconds_10.211.55.103:9100
+  Fillna: True # fill none values with 0
+  Dropna: True # delete columns woth none values
+  DWild:
+    Regex: '10.251.0.114' # filter based on wildcard (regex)
+    Keep: True
+  DColumns:
+    Dlist: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/data/low_variance.yaml
+
+
+Augmentation:
+  Scaler: # if not used set to false
+    StandardScaler:   # All scalers from scikitlearn
+      copy: True
+      with_mean: True
+      with_std: true
+#  Operations:
+#    STD:
+#      - cpu_load1:
+#          - node_load1_10.211.55.101:9100
+#          - node_load1_10.211.55.102:9100
+#          - node_load1_10.211.55.103:9100
+#      - memory:
+#          - node_memory_Active_anon_bytes_10.211.55.101:9100
+#          - node_memory_Active_anon_bytes_10.211.55.101:9100
+#          - node_memory_Active_anon_bytes_10.211.55.101:9100
+#    Mean:
+#      - network_flags:
+#          - node_network_flags_10.211.55.101:9100
+#          - node_network_flags_10.211.55.102:9100
+#          - node_network_flags_10.211.55.103:9100
+#      - network_out:
+#          - node_network_mtu_bytes_10.211.55.101:9100
+#          - node_network_mtu_bytes_10.211.55.102:9100
+#          - node_network_mtu_bytes_10.211.55.103:9100
+#    Median:
+#      - memory_file:
+#          - node_memory_Active_file_bytes_10.211.55.101:9100
+#          - node_memory_Active_file_bytes_10.211.55.102:9100
+#          - node_memory_Active_file_bytes_10.211.55.103:9100
+#      - memory_buffered:
+#          - node_memory_Buffers_bytes_10.211.55.101:9100
+#          - node_memory_Buffers_bytes_10.211.55.102:9100
+#          - node_memory_Buffers_bytes_10.211.55.103:9100
+#    RemoveFiltered: True
+#
+#    Method: !!python/object/apply:edeuser.user_methods.wrapper_add_columns # user defined operation
+#      kwds:
+#        columns: !!python/tuple [node_load15_10.211.55.101:9100, node_load15_10.211.55.102:9100]
+#        column_name: sum_load15
+
+#  Classification example
+#Training:
+#  Type: classification
+#  Method: !!python/object/apply:sklearn.ensemble.AdaBoostClassifier  # DONT forger ../apply
+#    _sklearn_version: '0.22.1'
+#    n_estimators: 100
+#    learning_rate: 1
+#    algorithm: SAMME.R
+#  Target: target
+#  Export: classification_2
+#  ValidRatio: 0.2
+#  TrainScore: True # expensive if set to false only test scores are computed
+#  ReturnEstimators: True
+#  CV:
+#    Type: StratifiedKFold  # user defined all from sklearn, if int than used standard
+#    Params:
+#      n_splits: 5
+#      shuffle: True
+#      random_state: 5
+#  Scorers:
+#    Scorer_list:
+#      - Scorer:
+#          Scorer_name: AUC
+#          skScorer: roc_auc
+#      - Scorer:
+#          Scorer_name: Jaccard_Index
+#          skScorer: jaccard
+#      - Scorer:
+#          Scorer_name: Balanced_Acc
+#          skScorer: balanced_accuracy
+#    User_scorer1: f1_score # key is user defined, can be changed same as Scorer_name
+
+Training:
+  Type: classification
+  Method: !!python/object/apply:sklearn.ensemble.RandomForestClassifier  # DONT forger ../apply
+    _sklearn_version: '0.24.2'
+    n_estimators: 100
+    criterion: "gini"
+    min_sample_split: 2
+    min_sample_leaf: 1
+    max_features: "log2"
+    n_jobs: -1
+    random_state: 42
+    verbose: 1
+  Target: target
+  Export: classification_y2
+  ValidRatio: 0.2
+  TrainScore: True # expensive if set to false only test scores are computed
+  ReturnEstimators: True
+  CV:
+    Type: StratifiedKFold  # user defined all from sklearn, if int than used standard
+    Params:
+      n_splits: 5
+      shuffle: True
+      random_state: 5
+  Scorers:
+    Scorer_list:
+      - Scorer:
+          Scorer_name: F1_weighted
+          skScorer: f1_weighted
+      - Scorer:
+          Scorer_name: Jaccard_Index
+          skScorer: jaccard_weighted # changes in scoring sklearn, for multiclass add suffix micro, weighted or sample
+      - Scorer:
+          Scorer_name: AUC
+          skScorer: roc_auc_ovr_weighted
+    User_scorer1: balanced_accuracy_score # key is user defined, can be changed same as Scorer_name
+
+  LearningCurve:
+    sizes: !!python/object/apply:numpy.core.function_base.linspace
+      kwds:
+        start: 0.3
+        stop: 1.0
+        num: 10
+    scorer: f1_weighted
+    n_jobs: 5
+
+  ValidationCurve:
+    param_name: n_estimators
+    param_range:
+      - 10
+      - 20
+      - 60
+      - 100
+      - 200
+      - 600
+    scoring: f1_weighted
+    n_jobs: 8
+  PrecisionRecallCurve: 1
+  ROCAUC: 1
+  RFE:
+    scorer: f1_weighted
+    step: 10
+  DecisionBoundary: 1
+  Verbose: 1
+
+Detect:
+  Method: RandomForestClassifier
+  Type: classification
+  Load: classification_y2_0
+  Scaler: StandardScaler # Same as for training
+#  Analysis: True # Start Shapely value based analysis
+  Analysis: # if plotting of heatmap, summary and feature importance is require, if not set False or use previous example
+    Plot: True
+
+
+
+Misc:
+  heap: 512m
+  checkpoint: True
+  delay: 15s
+  interval: 30m
+  resetindex: False
+  point: False

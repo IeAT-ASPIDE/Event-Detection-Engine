@@ -1,0 +1,196 @@
+Connector:
+  PREndpoint: hal720m.sage.ieat.ro
+  Dask:
+    SchedulerEndpoint: local
+    Scale: 3
+    SchedulerPort: 8787
+    EnforceCheck: False
+  MPort: 9200 # Moitoring port
+  KafkaEndpoint: 10.9.8.136
+  KafkaPort: 9092
+  KafkaTopic: edetopic
+#  Query: { "query": 'node_disk_written_bytes_total[5m]'}
+  Query: {"query": '{__name__=~"node.+"}[1m]'}
+  MetricsInterval: "1m" # Metrics datapoint interval definition
+  QSize: 0
+  Index: time
+  QDelay: 10s # Polling period for metrics fetching
+#  Local: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/data/demo_data.csv # Define the path to the local file for training
+
+Mode:
+  Training: True
+  Validate: False
+  Detect: False
+
+Filter:
+#  Columns:   # Which columns remain
+#    - "col1"
+#    - "col2"
+#    - "col4"
+#  Rows:
+#    ld: 145607979
+#    gd: 145607979
+  DColumns:  # Which columns to delete
+    - node_boot_time_seconds_10.211.55.101:9100
+    - node_boot_time_seconds_10.211.55.102:9100
+    - node_boot_time_seconds_10.211.55.103:9100
+  Fillna: True # fill none values with 0
+  Dropna: True # delete columns woth none values
+
+Augmentation:
+  Scaler: # if not used set to false
+    StandardScaler:   # All scalers from scikitlearn
+      copy: True
+      with_mean: True
+      with_std: True
+  Operations:
+    STD:
+      - cpu_load1:
+          - node_load1_10.211.55.101:9100
+          - node_load1_10.211.55.102:9100
+          - node_load1_10.211.55.103:9100
+      - memory:
+          - node_memory_Active_anon_bytes_10.211.55.101:9100
+          - node_memory_Active_anon_bytes_10.211.55.101:9100
+          - node_memory_Active_anon_bytes_10.211.55.101:9100
+    Mean:
+      - network_flags:
+          - node_network_flags_10.211.55.101:9100
+          - node_network_flags_10.211.55.102:9100
+          - node_network_flags_10.211.55.103:9100
+      - network_out:
+          - node_network_mtu_bytes_10.211.55.101:9100
+          - node_network_mtu_bytes_10.211.55.102:9100
+          - node_network_mtu_bytes_10.211.55.103:9100
+    Median:
+      - memory_file:
+          - node_memory_Active_file_bytes_10.211.55.101:9100
+          - node_memory_Active_file_bytes_10.211.55.102:9100
+          - node_memory_Active_file_bytes_10.211.55.103:9100
+      - memory_buffered:
+          - node_memory_Buffers_bytes_10.211.55.101:9100
+          - node_memory_Buffers_bytes_10.211.55.102:9100
+          - node_memory_Buffers_bytes_10.211.55.103:9100
+    RemoveFiltered: True
+
+    Method: !!python/object/apply:edeuser.user_methods.wrapper_add_columns # user defined operation
+      kwds:
+        columns: !!python/tuple [node_load15_10.211.55.101:9100, node_load15_10.211.55.102:9100]
+        column_name: sum_load15
+#  Categorical:
+#    - col1
+#    - col2
+#    OH: True
+
+# Analysis example
+# Analysis:
+#   Methods:
+#     - Method: !!python/object/apply:edeuser.user_methods.wrapper_analysis_corr
+#         kwds:
+#           name: Pearson1
+#           annot: False
+#           cmap: RdBu_r
+#           columns:
+#             - node_load1_10.211.55.101:9100
+#             - node_load1_10.211.55.102:9100
+#             - node_load1_10.211.55.103:9100
+#             - node_memory_Cached_bytes_10.211.55.101:9100
+#             - node_memory_Cached_bytes_10.211.55.102:9100
+#             - node_memory_Cached_bytes_10.211.55.103:9100
+#             - time
+#           location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+#     - Method: !!python/object/apply:edeuser.user_methods.wrapper_analysis_plot
+#         kwds:
+#           name: line1
+#           columns:
+#             - node_load1_10.211.55.101:9100
+#             - node_load1_10.211.55.102:9100
+#             - node_load1_10.211.55.103:9100
+#             - time
+#           location: /Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis
+#   Solo: True
+
+# Clustering example
+Training:
+  Type: clustering
+  Method: isoforest
+  Export: clustering_1
+  MethodSettings:
+    n_estimators: 10
+    max_samples: 10
+    contamination: 0.1
+    verbose: True
+    bootstrap: True
+
+# User defined clustering custom
+# Training:
+#  Type: clustering
+#  Method: !!python/object/apply:edeuser.user_methods.user_iso
+#    kwds:
+#      n_estimators: 100
+#      contamination: auto
+#      max_features: 1
+#      n_jobs: 2
+#      warm_start: False
+#      random_state: 45
+#      bootstrap: True
+#      verbose: True
+#      max_samples: 1
+#  Export: clustering_2
+
+# User defined clustering example sklearn
+#Training:
+#  Type: clustering
+#  Method: !!python/object/apply:sklearn.ensemble._iforest.IsolationForest  # DONT forger ../apply
+#    _sklearn_version: '0.22.1'
+#    behaviour: deprecated
+#    n_estimators: 100
+#    contamination: auto
+#    max_features: 1
+#    n_jobs: 2
+#    warm_start: False
+#    random_state: 45
+#    bootstrap: True
+#    verbose: True
+#    max_samples: 1
+#  Export: clustering_3
+
+Detect:
+  Method: isoforest
+  Type: clustering
+  Load: clustering_1
+  Scaler: StandardScaler  # Same as for training
+
+Point:
+  Memory:
+    cached:
+      gd: 231313
+      ld: 312334
+    buffered:
+      gd: 231313
+      ld: 312334
+    used:
+      gd: 231313
+      ld: 312334
+  Load:
+    shortterm:
+      gd: 231313
+      ld: 312334
+    midterm:
+      gd: 231313
+      ld: 312334
+  Network:
+    tx:
+      gd: 231313
+      ld: 312334
+    rx:
+      gd: 231313
+      ld: 312334
+
+Misc:
+  heap: 512m
+  checkpoint: True
+  delay: 10s
+  interval: 30m
+  resetindex: False
+  point: False

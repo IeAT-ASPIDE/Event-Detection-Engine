@@ -1,0 +1,72 @@
+{
+  "highlight": {
+    "pre_tags": [
+      "@kibana-highlighted-field@"
+    ],
+    "post_tags": [
+      "@/kibana-highlighted-field@"
+    ],
+    "fields": {
+      "*": {}
+    },
+    "require_field_match": false,
+    "fragment_size": 2147483647
+  },
+  "query": {
+    "filtered": {
+      "query": {
+        "query_string": {
+          "query": "type:cep-posidonia AND DComp:DMON",
+          "analyze_wildcard": true
+        }
+      },
+      "filter": {
+        "bool": {
+          "must": [
+            {
+              "range": {
+                "@timestamp": {
+                  "gte": 1498057785356,
+                  "lte": 1498144185356,
+                  "format": "epoch_millis"
+                }
+              }
+            }
+          ],
+          "must_not": []
+        }
+      }
+    }
+  },
+  "size": 500,
+  "sort": [
+    {
+      "@timestamp": {
+        "order": "desc",
+        "unmapped_type": "boolean"
+      }
+    }
+  ],
+  "aggs": {
+    "2": {
+      "date_histogram": {
+        "field": "@timestamp",
+        "interval": "30s",
+        "time_zone": "Europe/Helsinki",
+        "min_doc_count": 0,
+        "extended_bounds": {
+          "min": 1498057785356,
+          "max": 1498144185356
+        }
+      }
+    }
+  },
+  "fields": [
+    "*",
+    "_source"
+  ],
+  "script_fields": {},
+  "fielddata_fields": [
+    "@timestamp"
+  ]
+}
