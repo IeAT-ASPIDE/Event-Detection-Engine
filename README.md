@@ -718,12 +718,12 @@ Misc:
 
 ## Complete example configurations
 
-* [EDE Analysis](https://github.com/DIPET-UVT/EDE-Dipet/blob/master/1_ede_analysis.yaml)
-* [EDE Clustering](https://github.com/DIPET-UVT/EDE-Dipet/blob/master/2_ede_clustering.yaml)
-* [EDE Clustering user defined](https://github.com/DIPET-UVT/EDE-Dipet/blob/master/3_ede_clustering_user.yaml)
-* [EDE Clustering Prediction](https://github.com/DIPET-UVT/EDE-Dipet/blob/master/4_ede_clustering_predict.yaml)
-* [EDE Classification](https://github.com/DIPET-UVT/EDE-Dipet/blob/master/5_ede_classification.yaml)
-* [EDE Classification Predicton](https://github.com/DIPET-UVT/EDE-Dipet/blob/master/6_ede_classification_predict.yaml)
-* [EDE HPO](https://github.com/DIPET-UVT/EDE-Dipet/blob/master/7_ede_hpo.yaml)
-* [EDE TPOT](https://github.com/DIPET-UVT/EDE-Dipet/blob/master/8_ede_tpot.yaml)
-* [EDE TPOT Predict](https://github.com/DIPET-UVT/EDE-Dipet/blob/master/9_ede_tpot_predict.yaml)
+* [EDE Analysis](https://github.com/IeAT-ASPIDE/Event-Detection-Engine/blob/master/1_ede_analysis_y2.yaml)
+* [EDE Clustering](https://github.com/IeAT-ASPIDE/Event-Detection-Engine/blob/master/2_ede_clustering_y2.yaml)
+* [EDE Clustering user defined](https://github.com/IeAT-ASPIDE/Event-Detection-Engine/blob/master/3_ede_clustering_user_y2.yaml)
+* [EDE Clustering Prediction](https://github.com/IeAT-ASPIDE/Event-Detection-Engine/blob/master/4_ede_clustering_predict_y2.yaml)
+* [EDE Classification](https://github.com/IeAT-ASPIDE/Event-Detection-Engine/blob/master/5_ede_classification_y2.yaml)
+* [EDE Classification Predicton](https://github.com/IeAT-ASPIDE/Event-Detection-Engine/blob/master/6_ede_classification_predict_y2.yaml)
+* [EDE HPO](https://github.com/IeAT-ASPIDE/Event-Detection-Engine/blob/master/7_ede_hpo_y2.yaml)
+* [EDE TPOT](https://github.com/IeAT-ASPIDE/Event-Detection-Engine/blob/master/8_ede_tpot.yaml)
+* [EDE TPOT Predict](https://github.com/IeAT-ASPIDE/Event-Detection-Engine/blob/master/9_ede_tpot_predict.yaml)
