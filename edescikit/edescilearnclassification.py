@@ -279,7 +279,7 @@ class SciClassification:
                 anomalies = {}
                 anomalies['utc'] = int(data.iloc[an[0]].name)
                 anomalies['hutc'] = ut2hum(int(data.iloc[an[0]].name))
-                anomalies['type'] = dpredict[an[0]]
+                anomalies['type'] = str(dpredict[an[0]])
                 if explainer:
                     anomalies['analysis'] = self.__shap_values_processing(explainer=explainer,
                                                                           shap_values=shap_values,
@@ -425,13 +425,14 @@ class SciClassification:
                                                   columns=['feature_name', 'feature_importance_vals'])
                 feature_importance = feature_importance.iloc[
                     (-np.abs(feature_importance['feature_importance_vals'].values)).argsort()]
-                feature_importance_d[l] = feature_importance.to_dict()
+                feature_importance_d[int(l)] = feature_importance.to_dict()
         else:
             feature_importance = pd.DataFrame(list(zip(data.columns.tolist(), shap_values[label].sum(0))),
                                               columns=['feature_name', 'feature_importance_vals'])
             feature_importance = feature_importance.iloc[
                 (-np.abs(feature_importance['feature_importance_vals'].values)).argsort()]
-            feature_importance_d[label] = feature_importance.to_dict()
+            feature_importance_d[int(label)] = feature_importance.to_dict()
+
         return feature_importance_d
 
     def score(self, model, X, y):
