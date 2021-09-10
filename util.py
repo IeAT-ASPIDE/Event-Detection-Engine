@@ -298,7 +298,7 @@ def check_dask_settings(cnf=None):
     if cnf is None:
         cnf_file = 'ede_config.yaml'
     try:
-        opts, args = getopt.getopt(cnf, "he:tf:m:vx:d:lq:", ["endpoint=", "file=", "method=", "export=", "detect=", "query="])  # todo:expand command line options
+        opts, args = getopt.getopt(cnf, "he:tf:m:vx:d:lq:", ["endpoint=", "file=", "method=", "export=", "detect=", "query="])
     except getopt.GetoptError:
         logger.warning('[%s] : [WARN] Invalid argument received exiting', datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
         print("ede.py -f <filelocation>, -t -m <method> -v -x <modelname>")
@@ -313,7 +313,7 @@ def check_dask_settings(cnf=None):
         Scale = readCnf['Connector']['Dask']['Scale']
         SchedulerPort = readCnf['Connector']['Dask']['SchedulerPort']
         EnforceCheck = readCnf['Connector']['Dask']['EnforceCheck']
-    except:
+    except Exception:
         SchedulerEndpoint = 0
         Scale = 0
         SchedulerPort = 0
