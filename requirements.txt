@@ -42,7 +42,7 @@ ConfigSpace==0.4.14
 cryptography>=3.2
 cycler==0.10.0
 Cython==0.29.22
-dask==2021.4.0
+dask==2021.10.0
 dask-glm==0.2.0
 dask-ml==1.9.0
 dask-searchcv==0.2.0
