@@ -211,6 +211,15 @@ def main(argv,
             except Exception:
                 settings['prendpoint'] = None
 
+            try:
+                settings['MPort'] = readCnf['Connector']['MPort']
+                logger.info('[{}] : [INFO] Monitoring PR Endpoint set to {}'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'),settings["prendpoint"]))
+            except Exception:
+                print("WHAT")
+                print()
+                sys.exit()
+
             # if readCnf['Connector']['PREndpoint'] is None:  # todo; now only available in config file not in commandline
             #     logger.error('[%s] : [ERROR] ES and PR backend Enpoints not set in conf or commandline!',
             #                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
