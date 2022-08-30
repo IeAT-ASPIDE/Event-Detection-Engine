@@ -314,7 +314,7 @@ class SciCluster:
                     for k, v in smodel.get_params().items():
                         logger.info('[{}] : [INFO] Predict model parameter {} set to {}'.format(
                             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), k, v))
-                        dpredict = smodel.predict(data)
+                    dpredict = smodel.predict(data)
                 except Exception as inst:
                     logger.error('[{}] : [ERROR] Failed to load predictive model with {} and {}'.format(
                         datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(inst), inst.args))
@@ -323,11 +323,11 @@ class SciCluster:
                 dpredict = 0
                 logger.warning('[{}] : [WARN] DataFrame is empty with shape {} '.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), str(data.shape)))
-        if list(np.unique(dpredict)) == [0, 1] or isinstance(smodel, pyod.models.iforest.IForest):
+        from pyod.models.iforest import IForest # pyod.models.iforest.IForest
+        if list(np.unique(dpredict)) == [0, 1] or isinstance(smodel, IForest):
             anomaly_label = 1
         else:
             anomaly_label = -1
-
         if type(dpredict) is not int:
             anomalyArray = np.argwhere(dpredict == anomaly_label)
             if self.pred_analysis and anomalyArray.shape[0]:
