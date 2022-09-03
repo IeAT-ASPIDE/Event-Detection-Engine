@@ -354,6 +354,7 @@ class SciCluster:
         logger.info('[{}] : [INFO] Detected {} anomalies with model {} using method {} '.format(
             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), len(anomaliesList), model,
             str(smodel).split('(')[0]))
+
         return anomaliesDict
 
     def __shap_analysis(self,
