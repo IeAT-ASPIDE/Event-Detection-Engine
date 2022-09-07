@@ -184,7 +184,7 @@ class Connector:
             sys.exit(2)
         return resp.json()
 
-    def pr_query(self, query):
+    def pr_query(self, query, dump_raw=False):
         """
         QUery Monitoring Data From PR backend
         :param query: Query string for PR backend
@@ -202,6 +202,14 @@ class Connector:
                 '[{}] : [ERROR] Exception has occured while connecting to PR endpoint with type {} at arguments {}'.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(inst), inst.args))
             sys.exit(2)
+        if dump_raw:
+            logger.warning(
+                '[{}] : [WARN] Dumping raw JSON response for PR query ....'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+            resp_json = json.dumps(resp.json(), indent=4)
+            # Writing to sample.json
+            with open("raw_response.json", "w") as outfile:
+                outfile.write(resp_json)
         return resp.json()
 
     def query(self,
