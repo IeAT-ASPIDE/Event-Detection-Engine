@@ -100,6 +100,9 @@ This sections parameters are:
 * _KafkaEndpoint_ - Endpoint for a pre-existing Kafka deployment
 * _KafkaPort_ - Sets the Kafka port for the selected Kafka Endpoint (defaults to 9092)
 * _KafkaTopic_ - Name of the kafka topic to be used
+* _GrafanaUrl_ - Endpoint for Grafana used to report detected anomalies as annotations.
+* _GrafanaToken_ - User token used for authentication
+* _GrafanaTag_ - Tag used to identify dashboard to mark annotations. If not found a default dash will be created with this tag.
 * _Query_ - The query string to be used for fetching data:
     * In the case of ElasticSearch please consult the official [documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html).
     * In the case of Prometheus please consult the official [documentation](https://prometheus.io/docs/prometheus/latest/querying/basics/)
