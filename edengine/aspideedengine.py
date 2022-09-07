@@ -55,6 +55,7 @@ class EDEngine:
         self.query = settingsDict['query']
         self.qsize = settingsDict['qsize']
         self.local = settingsDict['local']
+        self.corem = settingsDict['core_metrics']
         self.target = settingsDict['target']
         self.augmentations = settingsDict['augmentation']
         self.detectionscaler = settingsDict['detectionscaler']
@@ -265,7 +266,7 @@ class EDEngine:
             logger.info('[{}] : [INFO] Fetching data from PR backend with query: {}'.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), queryd))
             qpr = self.edeConnector.pr_query(queryd)
-            df_qpr = self.dformat.prtoDF(data=qpr, checkpoint=checkpoint, verbose=True, detect=detect)
+            df_qpr = self.dformat.prtoDF(data=qpr, checkpoint=checkpoint, verbose=True, detect=detect, core_metrics=self.corem)
         return df_qpr
 
     def getData(self, detect=False):
@@ -670,6 +671,9 @@ class EDEngine:
                     self.dformat.dropColumns(df, cfilterparse(self.dfilter), cp=False)
                 else:
                     df = self.dformat.dropColumns(df, cfilterparse(self.dfilter))
+        if not self.corem:
+            logger.info('[{}] : [INFO] Core Metrics not set skipping ...'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
         if self.filterlow:
             self.dformat.filterLowVariance(df)
         if self.fillnan:
