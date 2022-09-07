@@ -156,10 +156,15 @@ parameters listed bellow:
 * __DWild__ - Removes columns based on regex
     * __Regex__ - Regex to be used for fitlering
     * __Keep__ - If `True` all selected columns are kept the rest are dropped, otherwise selected columns are dropped.
+* __CoreMetrics__ - Yaml descriptor containing common core metrics (i.e. features). This is important as the number of metrics can differ from training vs prediction for several reasons.
+  * If set to `True` then default name is used. If file with yaml extension is given it will check for that.
+  
 
 **Notes:**
 * Some machine learning models cannot deal with `None` values to this end the __Fillna__ or __Dropna__ parameters where introduced. It is important to note
 the __Dropna__ will drop any column which has at least one `None` value.
+* If __CoreMetrics__ is set during prediction EDE will try to load the descriptor and apply it. During training it will be created.
+* Although __CoreMetrics__ is set as a filter it is applied during dataframe creation not after it. As a mismatch in metric/feature names will raise an index out of bounds exception.
 
 ### Augmentation
 
