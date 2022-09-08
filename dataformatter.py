@@ -35,6 +35,7 @@ import joblib
 import importlib
 from functools import reduce
 import tqdm
+import re
 # import weka.core.jvm as jvm
 import warnings
 # warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -838,6 +839,71 @@ class DataFormatter:
     #         logger.error('[%s] : [ERROR] Exception occured while converting to arff with %s and %s', datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(inst), inst.args)
     #         jvm.stop()
     #     logger.info('[%s] : [INFO] Finished conversion of %s to %s', datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), dataIn, dataOut)
+
+    def arff2pd(self, arffLoc):
+        from scipy.io.arff import loadarff
+        raw_data = loadarff(arffLoc)
+        return pd.DataFrame(raw_data[0])
+
+    def pd2arff(self, dataFrame, filename, wekaname='ededata',cleanstringdata=True, cleannan=True):
+        def cleanstring(s):
+            if s != "?":
+                return re.sub('[^A-Za-z0-9]+', "_", str(s))
+            else:
+                return "?"
+
+        # Make dataFrame copy
+        df_copy = dataFrame.copy(deep=True)
+
+        if cleannan != False:
+            df_copy = df_copy.fillna(-999999999)  # this is so that we can swap this out for "?"
+            # this makes sure that certain numerical columns with missing values don't get stuck with "object" type
+
+        arffList = []
+        arffList.append("@relation " + wekaname + "\n")
+        # look at each column's dtype. If it's an "object", make it "nominal" under Weka for now (can be changed in source for dates.. etc)
+        for i in range(df_copy.shape[1]):
+            if df_copy.dtypes[i] == 'O' or (df_copy.columns[i] in ["Class", "CLASS", "class"]):
+                if cleannan != False:
+                    df_copy.iloc[:, i] = df_copy.iloc[:, i].replace(to_replace=-999999999, value="?")
+                if cleanstringdata != False:
+                    df_copy.iloc[:, i] = df_copy.iloc[:, i].apply(cleanstring)
+                uniqueNominalVals = [str(_i) for _i in np.unique(df_copy.iloc[:, i])]
+                uniqueNominalVals = ",".join(uniqueNominalVals)
+                uniqueNominalVals = uniqueNominalVals.replace("[", "")
+                uniqueNominalVals = uniqueNominalVals.replace("]", "")
+                uniqueValuesString = "{" + uniqueNominalVals + "}"
+                arffList.append("@attribute " + df_copy.columns[i] + uniqueValuesString + "\n")
+            else:
+                arffList.append("@attribute " + df_copy.columns[i] + " real\n")
+                # even if it is an integer, let'
+        arffList.append("@data\n")
+        for i in range(df_copy.shape[0]):  # instances
+            instanceString = ""
+            for j in range(df_copy.shape[1]):  # features
+                if df_copy.dtypes[j] == 'O':
+                    instanceString += "\"" + str(df_copy.iloc[i, j]) + "\""
+                else:
+                    instanceString += str(df_copy.iloc[i, j])
+                if j != df_copy.shape[1] - 1:  # if it's not the last feature, add a comma
+                    instanceString += ","
+            instanceString += "\n"
+            if cleannan != False:
+                instanceString = instanceString.replace("-999999999.0", "?")  # for numeric missing values
+                instanceString = instanceString.replace("\"?\"", "?")  # for categorical missing values
+            arffList.append(instanceString)
+
+        try:
+            arff_file = open(os.path.join(self.dataDir, filename))
+            arff_file.writelines(arffList)
+            arff_file.close()
+            logger.info('[{}] : [INFO] Saved DataFrame as arff at {}'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), os.path.join(self.dataDir, filename)))
+        except Exception as inst:
+            logger.error('[{}] : [ERROR] Failed to save Dataframe as arff file with {} and {}!'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(inst), inst.args))
+        del df_copy
+
 
     def normalize(self, dataFrame):
         '''
