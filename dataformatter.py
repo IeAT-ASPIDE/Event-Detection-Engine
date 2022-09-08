@@ -26,6 +26,7 @@ import sys
 import pandas as pd
 import numpy as np
 import glob
+import yaml
 from util import csvheaders2colNames # TODO Check ARFF compatibility
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.preprocessing import StandardScaler, OrdinalEncoder
@@ -683,7 +684,8 @@ class DataFormatter:
                checkpoint=False,
                verbose=False,
                index=None,
-               detect=False):
+               detect=False,
+               core_metrics=True):
         """
         From PR backend to dataframe
         :param data: PR response JSON
@@ -693,8 +695,26 @@ class DataFormatter:
             logger.error('[{}] : [ERROR] PR query response is empty, exiting.'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
             sys.exit(2)
+
+        check_core = False  # flag for checking core values from file
+        if core_metrics:
+            core_metrics_fname = "core_metrics.yaml"
+            if isinstance(core_metrics, str):
+                if [ext for ext in ['.yaml', '.yml'] if (ext in core_metrics)]:
+                    core_metrics_fname = core_metrics
+            core_metrics_file = os.path.join(self.dataDir, core_metrics_fname)
+            if os.path.isfile(core_metrics_file):
+                logger.warning('[{}] : [WARN] Core metrics descriptor detected.'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+                core_metrics = False
+                with open(core_metrics_file, 'r') as yrcore:
+                    core_metrics_dict = yaml.safe_load(yrcore)
+                    core_metrics_list = core_metrics_dict['core']
+                check_core = True
+
         df = pd.DataFrame()
         df_time = pd.DataFrame()
+        df_mismatch_list = []
         if verbose:
             dr = tqdm.tqdm(data['data']['result'])
         else:
@@ -702,24 +722,85 @@ class DataFormatter:
         for el in dr:
             metric_name = el['metric']['__name__']
             instance_name = el['metric']['instance']
-            new_metric = "{}_{}".format(metric_name, instance_name)
+            if 'device' in el['metric'].keys():  # differentiate if metric is depending on other devices
+                device_name = el['metric']['device']
+                new_metric = "{}_{}_{}".format(metric_name, device_name, instance_name)
+            else:
+                new_metric = "{}_{}".format(metric_name, instance_name)
+            if check_core:
+                if new_metric not in core_metrics_list:
+                    continue
             values = el['values']
             proc_val = []
             proc_time = []
             for val in values:
                 proc_val.append(val[1])
                 proc_time.append(val[0])
-            df[new_metric] = proc_val
-            time_new_metric = "time_{}".format(new_metric)
-            df_time[time_new_metric] = proc_time
+            try:
+                df[new_metric] = proc_val
+                time_new_metric = "time_{}".format(new_metric)
+                df_time[time_new_metric] = proc_time
+            except Exception as inst:
+                if df.shape[0] < len(proc_val):
+                    logger.warning('[{}] : [WARN] First metric index smaller then rest'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+                    df_mis = df.copy(deep=True)  # Make deep copy of dataframe
+                    df_mis['time'] = df_time.iloc[:,
+                                     0]  # add time to mismatch dataframe from original time dataframe, select first and only column
+
+                    df_mismatch_list.append(df_mis)  # Append copy to mismatch list
+                    df = pd.DataFrame()  # reinitialize org dataframe to empty
+                    df[new_metric] = proc_val  # add original large metric
+
+                    # Reinitialize time dataframe
+                    df_time = pd.DataFrame()  # reinitialize org dataframe to empty
+                    time_new_metric = "time_{}".format(new_metric)
+                    df_time[time_new_metric] = proc_time
+                elif df.shape[0] > len(proc_val):
+                    df_mismatch = pd.DataFrame()
+                    df_mismatch[new_metric] = proc_val
+                    df_mismatch['time'] = proc_time
+                    df_mismatch_list.append(df_mismatch)
+                else:
+                    logger.error('[{}] : [ERROR] Value incorrect for metric {}, proc_val: {} and proc_time: {}. Warning with {} and {}.'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), metric_name, proc_val, proc_time, type(inst), inst.args))
+                    sys.exit(1)
+
         # Calculate the meant time for all metrics
         df_time['mean'] = df_time.mean(axis=1)
         # Round to np.ceil all metrics
         df_time['mean'] = df_time['mean'].apply(np.ceil)
         # Add the meant time to rest of metrics
         df['time'] = df_time['mean']
+        if df_mismatch_list:
+            logger.warning('[{}] : [WARN] Misalignment detected in queried metrics, fixing ...'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+            for df_l in tqdm.tqdm(df_mismatch_list):
+                col_name = df_l.columns[0]
+                df[col_name] = np.nan
+                df_l['time'] = df_l['time'].apply(np.ceil)
+                for i, row in df_l.iterrows():
+                    # value = row[0]
+                    # time_i = row[1]
+                    df.loc[df['time'] == row[1], col_name] = row[0]
         logger.info('[{}] : [INFO] PR query resulted in dataframe of size: {}'.format(
                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), df.shape))
+        if core_metrics:
+            core_metrics_str = 'core_metrics.yaml'
+            if isinstance(core_metrics, str):
+                if [ext for ext in ['.yaml', '.yml'] if (ext in core_metrics)]:
+                    core_metrics_str = core_metrics
+                else:
+                    logger.warning('[{}] : [WARN] Core metrics must be yaml. Reverting to default name!.'.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), ))
+            columns_core = {}
+            columns_core['core'] = list(df.columns)
+
+            with open(os.path.join(self.dataDir, core_metrics_str), 'w+') as ycore: # todo add user naming for core metrics
+                yaml.dump(columns_core, ycore)
+            logger.info('[{}] : [INFO] PR query core metrics saved as {}.'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), core_metrics_str))
+
         if index is not None:
             df.set_index(index, inplace=True)
             logger.warning('[{}] : [WARN] PR query dataframe index set to  {}'.format(

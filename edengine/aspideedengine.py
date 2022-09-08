@@ -45,6 +45,9 @@ class EDEngine:
         self.prKafkaEndpoint = settingsDict['prkafkaendpoint']
         self.prKafkaPort = settingsDict['prkafkaport']
         self.prKafkaTopic = settingsDict['prkafkatopic']
+        self.grafana_url = settingsDict['grafanaurl']
+        self.grafana_credentials = settingsDict['grafanatoken']
+        self.grafana_tag = settingsDict['grafanatag']
         self.dmonPort = settingsDict['dmonPort']
         self.index = settingsDict['index']
         self.tfrom = settingsDict['from']
@@ -52,6 +55,7 @@ class EDEngine:
         self.query = settingsDict['query']
         self.qsize = settingsDict['qsize']
         self.local = settingsDict['local']
+        self.corem = settingsDict['core_metrics']
         self.target = settingsDict['target']
         self.augmentations = settingsDict['augmentation']
         self.detectionscaler = settingsDict['detectionscaler']
@@ -262,7 +266,7 @@ class EDEngine:
             logger.info('[{}] : [INFO] Fetching data from PR backend with query: {}'.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), queryd))
             qpr = self.edeConnector.pr_query(queryd)
-            df_qpr = self.dformat.prtoDF(data=qpr, checkpoint=checkpoint, verbose=True, detect=detect)
+            df_qpr = self.dformat.prtoDF(data=qpr, checkpoint=checkpoint, verbose=True, detect=detect, core_metrics=self.corem)
         return df_qpr
 
     def getData(self, detect=False):
@@ -667,6 +671,9 @@ class EDEngine:
                     self.dformat.dropColumns(df, cfilterparse(self.dfilter), cp=False)
                 else:
                     df = self.dformat.dropColumns(df, cfilterparse(self.dfilter))
+        if not self.corem:
+            logger.info('[{}] : [INFO] Core Metrics not set skipping ...'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
         if self.filterlow:
             self.dformat.filterLowVariance(df)
         if self.fillnan:
@@ -1217,6 +1224,7 @@ class EDEngine:
                         sleep(parseDelay(self.delay))
                     else:
                         anomalies['method'] = self.detectmethod
+                        anomalies['model'] = self.load
                         anomalies['interval'] = self.qinterval
                         logger.info('[{}] : [DEBUG] Reporting detected anomalies: {}'.format(
                             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), anomalies))
@@ -1569,6 +1577,41 @@ class EDEngine:
             self.edeConnector.pushAnomalyES(anomalyIndex=self.anomalyIndex, doc_type='anomaly', body=body)
         else:
             self.edeConnector.pushAnomalyKafka(body=body)
+
+        if self.grafana_url:
+            from edereporting.edegrafana import EDEGrafanaDash
+            logger.info('[%s] : [INFO] Adding Grafana annotation ...',
+                                            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
+            det_method = body['method']
+            det_model = body['model']
+            anomaly_method = f"Anomalies detected by EDE with method {det_method}, model: {det_model}"
+            anomaly_tags = [f'{det_method}_anomaly']
+            ede_grafana = EDEGrafanaDash(grafana_token=self.grafana_credentials, grafana_url=self.grafana_url)
+            # Check if dashboard exists with tag
+            dash_uid, dash_url, dash_id = ede_grafana.get_dash(tag=self.grafana_tag)
+            if dash_uid:
+                logger.info('[{}] : [INFO] Detected Grafana dashboard with tag {}, marking anomalies ... '.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), self.grafana_tag))
+            else:
+                # Generate Demo Dashboard
+                logger.info('[{}] : [INFO] Grafana Dashoard with tag {} not detected, creating ... '.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), self.grafana_tag))
+                ede_grafana.generate_dash(tag=self.grafana_tag, title="Serrano Grafana Dash Demo v1")
+                ede_grafana.create_dash()
+                # Getting dash data
+                dash_uid, dash_url, dash_id = ede_grafana.get_dash(tag=self.grafana_tag)
+                logger.info(
+                    '[{}] : [INFO] Grafana Dashoard generated with tag {}, uid {}, marking anomalies ... '.format(
+                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), self.grafana_tag, dash_uid))
+            for anomaly in body['anomalies']: # todo if anomalies are sequential make one continouse annotation not separate ones
+                try:
+                    anomaly_type = anomaly['type']
+                    anomaly_tags = [f'{anomaly_type}_{det_method}_anomaly']
+                except:
+                    pass
+                ede_grafana.push_annotation(int(anomaly['utc'] * 1000), int(anomaly['utc'] * 1000),
+                                            anomaly_tags=anomaly_tags,
+                                            message=anomaly_method, dash_id=dash_id)
 
     def getDFS(self, detect=False):
         # Query Strings

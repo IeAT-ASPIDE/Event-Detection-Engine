@@ -48,6 +48,9 @@ def main(argv,
     settings.prkafkaendpoint = None
     settings.prkafkaport = 9092
     settings.prkafkatopic = "edetopic"
+    settings.grafanaurl = None
+    settings.grafanatoken = None  # todo: make token readable from file and env variable
+    settings.grafanatag = None
     settings.augmentation = None  # augmentation including scaler and user defined methods
     settings.detectionscaler = None
     settings.MPort = 9090
@@ -63,6 +66,7 @@ def main(argv,
     settings.dropna = None
     settings.filterwild = None
     settings.filterlow = None
+    settings.core_metrics = None
     settings.local = None
     settings.train = None
     settings.hpomethod = None
@@ -211,6 +215,14 @@ def main(argv,
             except Exception:
                 settings['prendpoint'] = None
 
+            try:
+                settings['MPort'] = readCnf['Connector']['MPort']
+                logger.info('[{}] : [INFO] Monitoring PR Endpoint set to {}'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings["prendpoint"]))
+            except Exception:
+                logger.warning('[{}] : [INFO] Monitoring PR Endpoint set to default value'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+
             # if readCnf['Connector']['PREndpoint'] is None:  # todo; now only available in config file not in commandline
             #     logger.error('[%s] : [ERROR] ES and PR backend Enpoints not set in conf or commandline!',
             #                     datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
@@ -293,7 +305,22 @@ def main(argv,
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings.prkafkaendpoint))
         except:
             logger.warning('[{}] : [WARN] Kafka Endpoint not set.'.format(
-                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings.prkafkaendpoint))
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+
+    # Grafana settings
+    if settings.grafanaurl is None:
+        try:
+            settings.grafanaurl = readCnf['Connector']['GrafanaUrl']
+            if settings.grafanaurl == 'None':
+                settings.grafanaurl = None
+            else:
+                settings.grafanatoken = readCnf['Connector']['GrafanaToken']
+                settings.grafanatag = readCnf['Connector']['GrafanaTag']
+            logger.info('[{}] : [INFO] Grafana Endpoint set to  {}'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings.grafanaurl))
+        except:
+            logger.warning('[{}] : [WARN] Grafana Endpoint not set.'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
 
     if settings["nodes"] is None:
         try:
@@ -367,6 +394,8 @@ def main(argv,
     else:
         logger.info('[{}] : [INFO] Local datasource set to {}'.format(
             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings['local']))
+
+
     # Mode
     if settings["train"] is None:
         try:
@@ -824,6 +853,16 @@ def main(argv,
         logger.info('[{}] : [INFO] Drop based on wildcard not set, skipping ...'.format(
             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
         settings['filterwild'] = False
+
+    if settings['core_metrics'] is None:
+        try:
+            settings['core_metrics'] = readCnf['Filter']['CoreMetrics']
+
+        except Exception:
+            settings['core_metrics'] = False
+        logger.info('[{}] : [INFO] Core Metrics dump set to: {}'.format(
+            datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), settings['core_metrics']))
+
 
     if settings["checkpoint"] is None:
         try:

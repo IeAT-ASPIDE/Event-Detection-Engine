@@ -205,21 +205,22 @@ class EDEPDF(FPDF):
 
 
 if __name__ == "__main__":
+    analysis_folder = "/Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis/*.png"
+    model_folder = "/Users/Gabriel/Documents/workspaces/Event-Detection-Engine/models/*.png"
     parser = argparse.ArgumentParser(description='EDE Report Generator')
     parser.add_argument('--report', type=str, nargs='?',
                         help='Define type of report; analysis, classification, clustering')
     args = parser.parse_args()
     if args.report == 'analysis':
         print("Generating Analysis report ... ")
-        analysis_folder = "/Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis/*.png"
-        pdf = EDEPDF(folder="/Users/Gabriel/Documents/workspaces/Event-Detection-Engine/edeuser/analysis/*.png",
+
+        pdf = EDEPDF(folder=analysis_folder,
                      name="Analysis")
         pdf.generate_analysis_report()
         pdf.output('EDE_Analysis_Repot.pdf', 'F')
         print("Report generated!")
     elif args.report == 'classification':
         print("Generating Classification report ... ")
-        model_folder = "/Users/Gabriel/Documents/workspaces/Event-Detection-Engine/models/*.png"
         # Classification
         pdf = EDEPDF(folder=model_folder,
                      name="Classification Analysis")
@@ -228,7 +229,6 @@ if __name__ == "__main__":
         print("Report generated!")
     elif args.report == 'clustering':
         print("Generating Clustering report ... ")
-        model_folder = "/Users/Gabriel/Documents/workspaces/Event-Detection-Engine/models/*.png"
         # Clustering
         pdf = EDEPDF(folder=model_folder,
                      name="Clustering Analysis")

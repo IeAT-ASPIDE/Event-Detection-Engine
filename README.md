@@ -100,6 +100,9 @@ This sections parameters are:
 * _KafkaEndpoint_ - Endpoint for a pre-existing Kafka deployment
 * _KafkaPort_ - Sets the Kafka port for the selected Kafka Endpoint (defaults to 9092)
 * _KafkaTopic_ - Name of the kafka topic to be used
+* _GrafanaUrl_ - Endpoint for Grafana used to report detected anomalies as annotations.
+* _GrafanaToken_ - User token used for authentication
+* _GrafanaTag_ - Tag used to identify dashboard to mark annotations. If not found a default dash will be created with this tag.
 * _Query_ - The query string to be used for fetching data:
     * In the case of ElasticSearch please consult the official [documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html).
     * In the case of Prometheus please consult the official [documentation](https://prometheus.io/docs/prometheus/latest/querying/basics/)
@@ -153,10 +156,15 @@ parameters listed bellow:
 * __DWild__ - Removes columns based on regex
     * __Regex__ - Regex to be used for fitlering
     * __Keep__ - If `True` all selected columns are kept the rest are dropped, otherwise selected columns are dropped.
+* __CoreMetrics__ - Yaml descriptor containing common core metrics (i.e. features). This is important as the number of metrics can differ from training vs prediction for several reasons.
+  * If set to `True` then default name is used. If file with yaml extension is given it will check for that.
+  
 
 **Notes:**
 * Some machine learning models cannot deal with `None` values to this end the __Fillna__ or __Dropna__ parameters where introduced. It is important to note
 the __Dropna__ will drop any column which has at least one `None` value.
+* If __CoreMetrics__ is set during prediction EDE will try to load the descriptor and apply it. During training it will be created.
+* Although __CoreMetrics__ is set as a filter it is applied during dataframe creation not after it. As a mismatch in metric/feature names will raise an index out of bounds exception.
 
 ### Augmentation
 

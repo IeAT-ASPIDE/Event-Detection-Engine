@@ -26,11 +26,14 @@ import sys, getopt
 from edelogger import logger
 import json
 import time
+from requests.auth import HTTPBasicAuth
 
 
 class Connector:
     def __init__(self,
                  prEndpoint=None,
+                 prEndpointUser=None,
+                 prEndpointPasswd=None,
                  esEndpoint=None,
                  dmonPort=5001,
                  MInstancePort=9200,
@@ -56,6 +59,14 @@ class Connector:
             self.MInstancePort = MInstancePort
             logger.info('[{}] : [INFO] EDE PR backend Defined at: {} with port {}'.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), prEndpoint, MInstancePort))
+            self.prEndpointUser = prEndpointUser
+            self.prEndpointPasswd = prEndpointPasswd
+            if self.prEndpointUser is not None:
+                logger.info('[{}] : [INFO] EDE PR user defined'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+            if self.prEndpointPasswd is not None:
+                logger.info('[{}] : [INFO] EDE PR passwd defined'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
             self.dataDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
         if prKafkaEndpoint is None:
             self.producer = None
@@ -78,8 +89,14 @@ class Connector:
         pr_target_health = '/-/healthy'
         pr_target_ready = '/-/ready'
         try:
-            resp_h = requests.get("http://{}:{}{}".format(self.prEndpoint, self.MInstancePort, pr_target_health))
-            resp_r = requests.get("http://{}:{}{}".format(self.prEndpoint, self.MInstancePort, pr_target_ready))
+            if self.__check_auth_pr():
+                resp_h = requests.get("https://{}:{}{}".format(self.prEndpoint, self.MInstancePort, pr_target_health),
+                                      auth=HTTPBasicAuth(self.prEndpointUser, self.prEndpointPasswd))
+                resp_r = requests.get("https://{}:{}{}".format(self.prEndpoint, self.MInstancePort, pr_target_ready),
+                                      auth=HTTPBasicAuth(self.prEndpointUser, self.prEndpointPasswd))
+            else:
+                resp_h = requests.get("https://{}:{}{}".format(self.prEndpoint, self.MInstancePort, pr_target_health))
+                resp_r = requests.get("https://{}:{}{}".format(self.prEndpoint, self.MInstancePort, pr_target_ready))
         except Exception as inst:
             logger.error(
                 '[{}] : [ERROR] Exception has occured while connecting to PR endpoint with type {} at arguments {}'.format(
@@ -118,7 +135,11 @@ class Connector:
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type, suported))
             sys.exit(1)
         try:
-            resp = requests.get("http://{}:{}{}".format(self.prEndpoint, self.MInstancePort, pr_target_string))
+            if self.__check_auth_pr():
+                resp = requests.get("https://{}:{}{}".format(self.prEndpoint, self.MInstancePort, pr_target_string),
+                                    auth=HTTPBasicAuth(self.prEndpointUser, self.prEndpointPasswd))
+            else:
+                resp = requests.get("https://{}:{}{}".format(self.prEndpoint, self.MInstancePort, pr_target_string))
         except Exception as inst:
             logger.error(
                 '[{}] : [ERROR] Exception has occured while connecting to PR endpoint with type {} at arguments {}'.format(
@@ -133,7 +154,11 @@ class Connector:
         """
         pr_target_string = '/api/v1/targets'
         try:
-            resp = requests.get("http://{}:{}{}".format(self.prEndpoint, self.MInstancePort, pr_target_string))
+            if self.__check_auth_pr():
+                resp = requests.get("https://{}:{}{}".format(self.prEndpoint, self.MInstancePort, pr_target_string),
+                                    auth=HTTPBasicAuth(self.prEndpointUser, self.prEndpointPasswd))
+            else:
+                resp = requests.get("https://{}:{}{}".format(self.prEndpoint, self.MInstancePort, pr_target_string))
         except Exception as inst:
             logger.error(
                 '[{}] : [ERROR] Exception has occured while connecting to PR endpoint with type {} at arguments {}'.format(
@@ -147,7 +172,11 @@ class Connector:
         else:
             pr_target_string = '/api/v1/label/{}/values'.format(label)
         try:
-            resp = requests.get("http://{}:{}{}".format(self.prEndpoint, self.MInstancePort, pr_target_string))
+            if self.__check_auth_pr():
+                resp = requests.get("https://{}:{}{}".format(self.prEndpoint, self.MInstancePort, pr_target_string),
+                                    auth=HTTPBasicAuth(self.prEndpointUser, self.prEndpointPasswd))
+            else:
+                resp = requests.get("https://{}:{}{}".format(self.prEndpoint, self.MInstancePort, pr_target_string))
         except Exception as inst:
             logger.error(
                 '[{}] : [ERROR] Exception has occured while connecting to PR endpoint with type {} at arguments {}'.format(
@@ -155,7 +184,7 @@ class Connector:
             sys.exit(2)
         return resp.json()
 
-    def pr_query(self, query):
+    def pr_query(self, query, dump_raw=False):
         """
         QUery Monitoring Data From PR backend
         :param query: Query string for PR backend
@@ -163,12 +192,24 @@ class Connector:
         """
         try:
             url = '/api/v1/query'
-            resp = requests.get('http://{}:{}{}'.format(self.prEndpoint, self.MInstancePort, url), params=query)
+            if self.__check_auth_pr():
+                resp = requests.get('https://{}:{}{}'.format(self.prEndpoint, self.MInstancePort, url), params=query,
+                                    auth=HTTPBasicAuth(self.prEndpointUser, self.prEndpointPasswd))
+            else:
+                resp = requests.get('https://{}:{}{}'.format(self.prEndpoint, self.MInstancePort, url), params=query)
         except Exception as inst:
             logger.error(
                 '[{}] : [ERROR] Exception has occured while connecting to PR endpoint with type {} at arguments {}'.format(
                 datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(inst), inst.args))
             sys.exit(2)
+        if dump_raw:
+            logger.warning(
+                '[{}] : [WARN] Dumping raw JSON response for PR query ....'.format(
+                    datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')))
+            resp_json = json.dumps(resp.json(), indent=4)
+            # Writing to sample.json
+            with open("raw_response.json", "w") as outfile:
+                outfile.write(resp_json)
         return resp.json()
 
     def query(self,
@@ -342,6 +383,18 @@ class Connector:
                 logger.error('[{}] : [ERROR] Failed to report anomalies to kafka topic {} with {} and {}'.format(
             datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), self.prKafkaTopic, type(inst), inst.args))
         return 0
+
+    def __check_auth_pr(self):
+        if self.prEndpointUser and self.prEndpointPasswd:
+            return True
+        elif (self.prEndpointUser is None) and (self.prEndpointPasswd is None):
+            return False
+        else:
+            logger.error('[{}] : [ERROR] EDE Pr Endpoint auth credentials not set correctly, please check!'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), ))
+            sys.exit(1)
+            # if not [x for x in (self.prEndpointUser, self.prEndpointPasswd) if x is None]:
+            #     pass
 
     def getModel(self):
         return "getModel"
