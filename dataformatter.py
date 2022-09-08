@@ -840,10 +840,6 @@ class DataFormatter:
     #         jvm.stop()
     #     logger.info('[%s] : [INFO] Finished conversion of %s to %s', datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), dataIn, dataOut)
 
-    def arff2pd(self, arffLoc):
-        from scipy.io.arff import loadarff
-        raw_data = loadarff(arffLoc)
-        return pd.DataFrame(raw_data[0])
 
     def pd2arff(self, dataFrame, filename, wekaname='ededata',cleanstringdata=True, cleannan=True):
         def cleanstring(s):

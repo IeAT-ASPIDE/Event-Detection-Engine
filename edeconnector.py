@@ -402,8 +402,22 @@ class Connector:
     def pushModel(self):
         return "push model"
 
+    def arff2pd(self, arfffile):
+        from scipy.io.arff import loadarff
+        raw_data = loadarff(arfffile)
+        return pd.DataFrame(raw_data[0])
+
     def localData(self, data):
         data_loc = os.path.join(self.dataDir, data)
+        extension = data.split('.')[-1]
+        try:
+            if ['arff', 'ARFF'] in extension:
+                return self.arff2pd(data_loc)
+        except Exception as inst:
+            logger.error('[{}] : [ERROR] Cannot load local arff data with  {} and {}'.format(
+                datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'), type(inst), inst.args))
+            sys.exit(2)
+            
         try:
             df = pd.read_csv(data_loc)
         except Exception as inst:
