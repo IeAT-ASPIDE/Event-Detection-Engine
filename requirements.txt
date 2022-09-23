@@ -165,7 +165,7 @@ plotly==5.1.0
 pluggy==0.13.1
 prometheus-client==0.10.0
 prompt-toolkit==3.0.18
-protobuf==3.15.7
+protobuf==3.18.3
 psutil==5.8.0
 ptyprocess==0.7.0
 py==1.10.0
