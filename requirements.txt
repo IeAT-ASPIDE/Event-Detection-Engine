@@ -124,7 +124,7 @@ langdetect==1.0.8
 lightgbm==3.2.0
 llvmlite==0.36.0
 locket==0.2.1
-lxml==4.6.3
+lxml==4.9.1
 Markdown==3.3.4
 MarkupSafe==1.1.1
 matplotlib==3.4.1
