@@ -1,7 +1,7 @@
-# Event-Detection-Engine - DIPET
+# Event-Detection-Engine - H2020 SERRANO
 
 Event Detection Engine  based on the work done during the DICE H2020 project specifically the [DICE Anomaly Detection Platform.](https://github.com/dice-project/DICE-Anomaly-Detection-Tool)
- for the [ASPIDE](https://www.aspide-project.eu/) H2020 project.
+ for the [SERRANO](https://ict-serrano.eu/) H2020 project.
 
 ## Context
 

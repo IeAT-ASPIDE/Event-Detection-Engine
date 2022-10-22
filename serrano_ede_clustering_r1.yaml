@@ -1,0 +1,64 @@
+Connector:
+  PREndpoint: prometheus.monitoring.services.cloud.ict-serrano.eu
+  Dask:
+    SchedulerEndpoint: local
+    Scale: 3
+    SchedulerPort: 8787
+    EnforceCheck: False
+  MPort: 443 # Monitoring port
+  # KafkaEndpoint: 10.9.8.136
+  # KafkaPort: 9092
+  # KafkaTopic: edetopic
+  Query: {"query": '{__name__=~"node.+"}[500m]'}
+  MetricsInterval: "1m" # Metrics datapoint interval definition
+  QSize: 0
+  Index: time
+  QDelay: 30s # Polling period for metrics fetching
+#  Local: df_anomaly.csv # Define the path to the local file for training
+
+Mode:
+  Training: True
+  Validate: False
+  Detect: False
+
+Filter:
+ # DColumns:  # Which columns to delete
+ #   - target
+  CoreMetrics: serrano_core_metrics.yaml # descriptor for core metric, only these will be considered
+  Fillna: True # fill none values with 0
+  Dropna: True # delete columns with none values
+
+Augmentation:
+  Scaler: # if not used set to false
+    StandardScaler:   # All scalers from scikitlearn
+      copy: True
+      # with_mean: True
+      # with_std: True
+  
+
+# Clustering example
+Training:
+  Type: clustering
+  Method: isoforest
+  Export: serrano_if_demo
+  MethodSettings:
+    n_estimators: 10
+    max_samples: 10
+    contamination: 0.5
+    verbose: True
+    bootstrap: True
+
+Detect:
+  Method: isoforest
+  Type: clustering
+  Load: serrano_if
+  Scaler: StandardScaler  # Same as for training
+
+
+Misc:
+  heap: 512m
+  checkpoint: True
+  delay: 10s
+  interval: 30m
+  resetindex: False
+  point: False
