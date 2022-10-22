@@ -6,10 +6,11 @@ from edeconnector import Connector
 
 if __name__ == '__main__':
     dataDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
-    prometheus_endpoint = '194.102.62.155'
-    prometheus_port = '9090'
+    # prometheus_endpoint = '194.102.62.155'
+    prometheus_endpoint = 'prometheus.monitoring.services.cloud.ict-serrano.eu'
+    prometheus_port = '443'
     print("Collecting data from Monitoring at: {}".format(prometheus_endpoint))
-    prometheus_query = {"query": '''{__name__=~"node.+"}[80m]'''}
+    prometheus_query = {"query": '''{__name__=~"node.+"}[206m]'''}
     # prometheus_query = qContructor.pr_query_node(time="1h")
     edeConnector = Connector(prEndpoint=prometheus_endpoint, MInstancePort=prometheus_port)
 

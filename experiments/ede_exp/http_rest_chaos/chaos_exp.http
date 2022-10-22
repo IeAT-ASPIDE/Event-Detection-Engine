@@ -1,0 +1,108 @@
+# For a quick start check out our HTTP Requests collection (Tools|HTTP Client|Open HTTP Requests Collection).
+#
+# Following HTTP Request Live Templates are available:
+# * 'gtrp' and 'gtr' create a GET request with or without query parameters;
+# * 'ptr' and 'ptrp' create a POST request with a simple or parameter-like body;
+# * 'mptr' and 'fptr' create a POST request to submit a form with a text or file field (multipart/form-data);
+
+# Get node details
+GET http://hal720m.sage.ieat.ro:5001/node
+
+### Get Raw session data, if non set fetch default one
+GET http://hal720m.sage.ieat.ro:5001/chaos/session
+
+### Put user defined session data
+PUT http://hal720m.sage.ieat.ro:5001/chaos/session
+Content-Type: application/json
+Cache-Control: no-cache
+
+< session_exp.json
+//{
+//        "anomalies": [
+//
+//            {
+//                "type": "cpu_overload",
+//                "options": {
+//                    "half": 1,
+//                    "time_out": 15
+//                },
+//                "prob": 0.9
+//            },
+//            {
+//                "type": "dummy",
+//                "options": {
+//                    "stime": 10
+//                },
+//                "prob": 0.1
+//            }
+//        ],
+//        "options":
+//          {
+//            "loop": 1,
+//            "randomise": 1,
+//            "sample_size": 10,
+//            "distribution": "prob"
+//          }
+//    }
+
+### get anomalies to be executed in a session
+GET http://hal720m.sage.ieat.ro:5001/chaos/session/execute
+
+### Generate final session
+PUT http://hal720m.sage.ieat.ro:5001/chaos/session/execute
+
+### Execute final session, if not available (above PUT not executed) generate it on the fly
+POST http://hal720m.sage.ieat.ro:5001/chaos/session/execute
+x-access-tokens: 50450bd2-ba1b-4767-bc1e-7f46b7c805f0
+
+### Get current jobs based on status (failed, finished, queued, started directly from rq
+GET http://hal720m.sage.ieat.ro:5001/chaos/session/execute/jobs
+
+
+### Deletes all job from all registries
+DELETE http://hal720m.sage.ieat.ro:5001/chaos/session/execute/jobs
+x-access-tokens: 50450bd2-ba1b-4767-bc1e-7f46b7c805f0
+
+### Get detailed info on specific job based in job_id
+GET http://hal720m.sage.ieat.ro:5001/chaos/session/execute/jobs/7a75c47e-ba24-47c5-8bd1-2ba6632b7182
+
+### Get detailed job execution details
+GET http://hal720m.sage.ieat.ro:5001/chaos/session/execute/jobs/all
+
+### Deletes specific job based on job_id
+DELETE http://hal720m.sage.ieat.ro:5001/chaos/session/execute/jobs/3cfff92e-ef5d-40a6-905d-d99683874fca
+
+
+### Get list of available logs
+GET http://hal720m.sage.ieat.ro:5001/chaos/session/execute/jobs/logs
+
+### Get arhive available logs
+POST http://hal720m.sage.ieat.ro:5001/chaos/session/execute/jobs/logs
+
+
+### Delete logs
+DELETE http://hal720m.sage.ieat.ro:5001/chaos/session/execute/jobs/logs
+
+### Get specific log from list
+GET http://hal720m.sage.ieat.ro:5001/chaos/session/execute/jobs/logs/dummy-out.log
+
+### Get available workers
+GET http://hal720m.sage.ieat.ro:5001/workers
+
+### Start workers as service
+POST http://hal720m.sage.ieat.ro:5001/workers
+x-access-tokens: 50450bd2-ba1b-4767-bc1e-7f46b7c805f0
+
+### Stops workers, if no json payload defined stoppes all else id of worker to be stopped must be specified
+DELETE http://hal720m.sage.ieat.ro:5001/workers
+x-access-tokens: 50450bd2-ba1b-4767-bc1e-7f46b7c805f0
+
+###
+#Content-Type: application/json
+#
+#{
+#"id": 3
+#}
+
+
+

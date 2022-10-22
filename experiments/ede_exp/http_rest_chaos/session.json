@@ -1,0 +1,57 @@
+{
+  "anomalies": [
+    {
+      "type": "dummy",
+      "options": {
+        "stime": 10
+      },
+      "prob": 0.4
+    },
+    {
+      "type": "cpu_overload",
+      "options": {
+        "half": 1,
+        "time_out": 15
+      },
+      "prob": 0.1
+    },
+    {
+      "type": "memeater_v2",
+      "options": {
+        "unit": "gb",
+        "multiplier": 1,
+        "iteration": 2,
+        "time_out": 20
+      },
+      "prob": 0.2
+    },
+    {
+      "type": "copy",
+      "options": {
+         "unit": "kb",
+        "multiplier": 1,
+        "remove": 1,
+        "time_out": 20
+      },
+      "prob": 0.2
+    },
+    {
+      "type": "ddot",
+      "options": {
+        "iterations": 1,
+        "time_out": 1,
+        "modifiers": [0.9, 5,  2]
+      },
+      "prob": 0.1
+    }
+  ],
+  "options":
+  {
+    "loop": 1,
+    "stagger_time": 0,
+    "randomise": 1,
+    "sample_size": 10,
+    "distribution": "uniform",
+    "workers": 1
+  }
+}

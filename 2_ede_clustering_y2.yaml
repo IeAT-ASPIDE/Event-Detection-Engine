@@ -9,8 +9,8 @@ Connector:
   KafkaEndpoint: 10.9.8.136
   KafkaPort: 9092
   KafkaTopic: edetopic
-#  Query: { "query": 'node_disk_written_bytes_total[5m]'}
-  Query: {"query": '{__name__=~"node.+"}[1m]'}
+#  Query: { "query": 'node_disk_written_bytes_total[10m]'}
+  Query: {"query": '{__name__=~"node.+"}[10m]'}
   MetricsInterval: "1m" # Metrics datapoint interval definition
   QSize: 0
   Index: time
