@@ -50,7 +50,7 @@ dask-xgboost==0.1.10
 deap==1.3.1
 decorator==4.3.0
 defusedxml==0.5.0
-distributed==2021.4.0
+distributed==2021.10.0
 elasticsearch==1.9.0
 elasticsearch-watcher==0.4.0
 entrypoints==0.2.3
